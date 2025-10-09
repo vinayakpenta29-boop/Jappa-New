@@ -144,17 +144,13 @@ public class MainActivity extends AppCompatActivity {
 
         StringBuilder sb = new StringBuilder();
         for (Salesman s : dataList) {
-            sb.append(s.toDelimitedString()).append("
-");
+            sb.append(s.toDelimitedString()).append("");
         }
-        sb.append("Total Jappa: ").append(String.format("%.2f", totalJappa)).append("
-");
+        sb.append("Total Jappa: ").append(String.format("%.2f", totalJappa)).append("");
         if (cutoffSwitch.isChecked()) {
             double cutoffAmt = totalJappa * 0.28;
-            sb.append("Cut Off Jappa (28%): ").append(String.format("%.2f", cutoffAmt)).append("
-");
-            sb.append("Balance Amount: ").append(String.format("%.2f", totalJappa - cutoffAmt)).append("
-");
+            sb.append("Cut Off Jappa (28%): ").append(String.format("%.2f", cutoffAmt)).append("");
+            sb.append("Balance Amount: ").append(String.format("%.2f", totalJappa - cutoffAmt)).append("");
         }
         try {
             BarcodeEncoder barcodeEncoder = new BarcodeEncoder();
@@ -172,4 +168,4 @@ public class MainActivity extends AppCompatActivity {
     private void toggleQRCode() {
         updateQRCode();
     }
-                                  }
+}
