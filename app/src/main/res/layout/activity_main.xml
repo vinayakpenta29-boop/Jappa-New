@@ -1,0 +1,89 @@
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent">
+    <LinearLayout android:orientation="vertical" android:padding="16dp"
+        android:layout_width="match_parent" android:layout_height="wrap_content">
+
+        <TextView android:text="Dynamic Sales Table"
+            android:textSize="22sp" android:textStyle="bold"
+            android:layout_marginBottom="12dp"
+            android:layout_width="wrap_content" android:layout_height="wrap_content" />
+
+        <LinearLayout android:orientation="horizontal" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:gravity="center" android:layout_marginBottom="8dp">
+            <EditText android:id="@+id/salesmanNo" android:hint="Salesman No." android:inputType="number"
+                android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content"/>
+            <EditText android:id="@+id/barcode" android:hint="Barcode" android:inputType="number"
+                android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content"/>
+            <EditText android:id="@+id/millRate" android:hint="Mill Rate" android:inputType="numberDecimal"
+                android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content"/>
+        </LinearLayout>
+
+        <LinearLayout android:orientation="horizontal" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:gravity="center" android:layout_marginBottom="8dp">
+            <EditText android:id="@+id/billNo" android:hint="Bill No." android:inputType="number"
+                android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content"/>
+            <LinearLayout android:orientation="vertical" android:layout_width="0dp"
+                android:layout_weight="1" android:layout_height="wrap_content">
+                <TextView android:text="Date" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+                <DatePicker android:id="@+id/datePicker" android:calendarViewShown="false"
+                    android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+            </LinearLayout>
+            <EditText android:id="@+id/jappa" android:hint="Jappa (Amount)" android:inputType="numberDecimal"
+                android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content"/>
+        </LinearLayout>
+
+        <Button android:id="@+id/addBtn" android:text="ADD"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"/>
+
+        <!-- Switches -->
+        <LinearLayout android:orientation="horizontal" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:gravity="start" android:layout_marginTop="12dp">
+            <LinearLayout android:orientation="horizontal" android:layout_width="wrap_content"
+                android:layout_height="wrap_content" android:layout_marginEnd="30dp">
+                <TextView android:text="Show QR Code" android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"/>
+                <Switch android:id="@+id/qrSwitch" android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"/>
+            </LinearLayout>
+            <LinearLayout android:orientation="horizontal" android:layout_width="wrap_content"
+                android:layout_height="wrap_content">
+                <TextView android:text="Cut Off (28%)" android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"/>
+                <Switch android:id="@+id/cutoffSwitch" android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"/>
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Table -->
+        <HorizontalScrollView android:layout_width="match_parent" android:layout_height="wrap_content">
+            <TableLayout android:id="@+id/tableLayout"
+                android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:stretchColumns="*">
+                <TableRow>
+                    <TextView android:text="No."/>
+                    <TextView android:text="S. No."/>
+                    <TextView android:text="Barcode"/>
+                    <TextView android:text="Mill Rate"/>
+                    <TextView android:text="Bill No."/>
+                    <TextView android:text="Date"/>
+                    <TextView android:text="Jappa"/>
+                </TableRow>
+                <!-- Dynamic rows here -->
+                <TableRow>
+                    <TextView android:id="@+id/totalJappaText" android:layout_span="6" android:text="Total Jappa: 0"/>
+                </TableRow>
+            </TableLayout>
+        </HorizontalScrollView>
+
+        <TextView android:id="@+id/cutoffJappaText" android:text="Cut Off Jappa" android:visibility="gone"/>
+        <TextView android:id="@+id/balanceText" android:text="Balance Amt" android:visibility="gone"/>
+
+        <ImageView android:id="@+id/qrCodeImage" android:layout_width="200dp"
+            android:layout_height="200dp" android:layout_gravity="center" android:visibility="gone"/>
+        <TextView android:id="@+id/lastUpdated" android:layout_width="wrap_content"
+            android:layout_height="wrap_content" android:text="" android:textSize="12sp"/>
+
+    </LinearLayout>
+</ScrollView>
