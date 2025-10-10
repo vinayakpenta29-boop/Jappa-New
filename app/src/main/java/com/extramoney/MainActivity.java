@@ -104,7 +104,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void updateTable() {
-        // Remove dynamic rows: keep header row (index 0) and footer row (last)
+        // Remove dynamic rows but keep first and last rows (header/footer)
         int childCount = tableLayout.getChildCount();
         if (childCount > 2) {
             tableLayout.removeViews(1, childCount - 2);
@@ -117,7 +117,6 @@ public class MainActivity extends AppCompatActivity {
                 tv.setPadding(6, 6, 6, 6);
                 tr.addView(tv);
             }
-            // Insert before footer row, which is last
             tableLayout.addView(tr, tableLayout.getChildCount() - 1);
         }
     }
@@ -137,33 +136,38 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void updateQRCode() {
-    if (!qrSwitch.isChecked() || dataList.isEmpty()) {
-        qrCodeImage.setVisibility(View.GONE);
-        lastUpdated.setText("");
-        return;
-    }
-    StringBuilder sb = new StringBuilder();
-    for (Salesman s : dataList) {
-        sb.append(s.toDelimitedString()).append("
+        if (!qrSwitch.isChecked() || dataList.isEmpty()) {
+            qrCodeImage.setVisibility(View.GONE);
+            lastUpdated.setText("");
+            return;
+        }
+        StringBuilder sb = new StringBuilder();
+        for (Salesman s : dataList) {
+            sb.append(s.toDelimitedString()).append("
 ");
-    }
-    sb.append("Total Jappa: ").append(String.format(Locale.getDefault(), "%.2f", totalJappa)).append("
+        }
+        sb.append("Total Jappa: ").append(String.format(Locale.getDefault(), "%.2f", totalJappa)).append("
 ");
-    if (cutoffSwitch.isChecked()) {
-        double cutoffAmt = totalJappa * 0.28;
-        sb.append("Cut Off Jappa (28%): ").append(String.format(Locale.getDefault(), "%.2f", cutoffAmt)).append("
+        if (cutoffSwitch.isChecked()) {
+            double cutoffAmt = totalJappa * 0.28;
+            sb.append("Cut Off Jappa (28%): ").append(String.format(Locale.getDefault(), "%.2f", cutoffAmt)).append("
 ");
-        sb.append("Balance Amount: ").append(String.format(Locale.getDefault(), "%.2f", totalJappa - cutoffAmt)).append("
+            sb.append("Balance Amount: ").append(String.format(Locale.getDefault(), "%.2f", totalJappa - cutoffAmt)).append("
 ");
+        }
+        try {
+            BarcodeEncoder barcodeEncoder = new BarcodeEncoder();
+            Bitmap bitmap = barcodeEncoder.encodeBitmap(
+                sb.toString(), BarcodeFormat.QR_CODE, 600, 600);
+            qrCodeImage.setImageBitmap(bitmap);
+            qrCodeImage.setVisibility(View.VISIBLE);
+            lastUpdated.setText("Last updated: " + lastDate);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
-    try {
-        BarcodeEncoder barcodeEncoder = new BarcodeEncoder();
-        Bitmap bitmap = barcodeEncoder.encodeBitmap(
-            sb.toString(), BarcodeFormat.QR_CODE, 600, 600);
-        qrCodeImage.setImageBitmap(bitmap);
-        qrCodeImage.setVisibility(View.VISIBLE);
-        lastUpdated.setText("Last updated: " + lastDate);
-    } catch (Exception e) {
-        e.printStackTrace();
+
+    private void toggleQRCode() {
+        updateQRCode();
     }
-}
+                                                }
