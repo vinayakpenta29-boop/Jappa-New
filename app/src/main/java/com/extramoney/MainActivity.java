@@ -5,10 +5,8 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.*;
 import androidx.appcompat.app.AppCompatActivity;
-
 import com.google.zxing.BarcodeFormat;
 import com.journeyapps.barcodescanner.BarcodeEncoder;
-
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -30,10 +28,9 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-
         try {
-            tableLayout = findViewById(R.id.tableLayout);
+            setContentView(R.layout.activity_main);
+
             salesmanNo = findViewById(R.id.salesmanNo);
             barcode = findViewById(R.id.barcode);
             millRate = findViewById(R.id.millRate);
@@ -48,24 +45,12 @@ public class MainActivity extends AppCompatActivity {
             totalJappaText = findViewById(R.id.totalJappaText);
             cutoffJappaText = findViewById(R.id.cutoffJappaText);
             balanceText = findViewById(R.id.balanceText);
-
-            if (tableLayout == null) {
-                Toast.makeText(this, "Layout error — check IDs in activity_main.xml", Toast.LENGTH_LONG).show();
-                return;
-            }
+            tableLayout = findViewById(R.id.tableLayout);
 
             addBtn.setOnClickListener(v -> addRow());
-            qrSwitch.setOnCheckedChangeListener((b, checked) -> updateQRCode());
-            cutoffSwitch.setOnCheckedChangeListener((b, checked) -> {
-                updateTotals();
-                updateQRCode();
-            });
-
-            updateTotals();
 
         } catch (Exception e) {
-            e.printStackTrace();
-            Toast.makeText(this, "Initialization error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            showError("onCreate error: " + e.getMessage());
         }
     }
 
@@ -78,116 +63,69 @@ public class MainActivity extends AppCompatActivity {
             String jp = jappa.getText().toString().trim();
 
             if (sNo.isEmpty() || bc.isEmpty() || mr.isEmpty() || bill.isEmpty() || jp.isEmpty()) {
-                Toast.makeText(this, "Please fill all fields", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Fill all fields", Toast.LENGTH_SHORT).show();
                 return;
             }
 
-            double jappaVal;
-            try {
-                jappaVal = Double.parseDouble(jp);
-            } catch (Exception e) {
-                Toast.makeText(this, "Jappa must be numeric", Toast.LENGTH_SHORT).show();
-                return;
-            }
+            double jappaVal = Double.parseDouble(jp);
 
-            int day = datePicker.getDayOfMonth();
-            int month = datePicker.getMonth();
-            int year = datePicker.getYear();
             Calendar cal = Calendar.getInstance();
-            cal.set(year, month, day);
+            cal.set(datePicker.getYear(), datePicker.getMonth(), datePicker.getDayOfMonth());
             SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
             String dateStr = sdf.format(cal.getTime());
+            lastDate = dateStr;
 
             rowCount++;
-            lastDate = dateStr;
             totalJappa += jappaVal;
 
-            dataList.add(new Salesman(rowCount, sNo, bc, mr, bill, dateStr, jappaVal));
-            updateTable();
-            updateTotals();
+            Salesman s = new Salesman(rowCount, sNo, bc, mr, bill, dateStr, jappaVal);
+            dataList.add(s);
+
+            TableRow tr = new TableRow(this);
+            for (String val : s.toArray()) {
+                TextView tv = new TextView(this);
+                tv.setText(val);
+                tr.addView(tv);
+            }
+            tableLayout.addView(tr, tableLayout.getChildCount() - 1);
+
+            totalJappaText.setText("Total Jappa: " + totalJappa);
             updateQRCode();
 
-            // clear except salesman number
-            barcode.setText("");
-            millRate.setText("");
-            billNo.setText("");
-            jappa.setText("");
-
         } catch (Exception e) {
-            e.printStackTrace();
-            Toast.makeText(this, "Error adding row: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-        }
-    }
-
-    private void updateTable() {
-        try {
-            int childCount = tableLayout.getChildCount();
-            if (childCount > 2) {
-                tableLayout.removeViews(1, childCount - 2);
-            }
-
-            for (Salesman s : dataList) {
-                TableRow tr = new TableRow(this);
-                for (String val : s.toArray()) {
-                    TextView tv = new TextView(this);
-                    tv.setText(val);
-                    tv.setPadding(8, 6, 8, 6);
-                    tr.addView(tv);
-                }
-                tableLayout.addView(tr, tableLayout.getChildCount() - 1);
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            Toast.makeText(this, "Error updating table", Toast.LENGTH_SHORT).show();
-        }
-    }
-
-    private void updateTotals() {
-        totalJappaText.setText("Total Jappa: " + String.format(Locale.getDefault(), "%.2f", totalJappa));
-
-        if (cutoffSwitch.isChecked()) {
-            double cutoffAmt = totalJappa * 0.28;
-            cutoffJappaText.setText("Cut Off Jappa (28%): " + String.format(Locale.getDefault(), "%.2f", cutoffAmt));
-            balanceText.setText("Balance Amount: " + String.format(Locale.getDefault(), "%.2f", totalJappa - cutoffAmt));
-            cutoffJappaText.setVisibility(View.VISIBLE);
-            balanceText.setVisibility(View.VISIBLE);
-        } else {
-            cutoffJappaText.setVisibility(View.GONE);
-            balanceText.setVisibility(View.GONE);
+            showError("addRow error: " + e.getMessage());
         }
     }
 
     private void updateQRCode() {
-        if (!qrSwitch.isChecked() || dataList.isEmpty()) {
-            qrCodeImage.setVisibility(View.GONE);
-            lastUpdated.setText("");
-            return;
-        }
-
         try {
+            if (!qrSwitch.isChecked()) {
+                qrCodeImage.setVisibility(View.GONE);
+                lastUpdated.setText("");
+                return;
+            }
+
             StringBuilder sb = new StringBuilder();
-            for (Salesman s : dataList) {
-                sb.append(s.toDelimitedString()).append("\n");
-            }
+            for (Salesman s : dataList) sb.append(s.toDelimitedString()).append("\n");
+            sb.append("Total Jappa: ").append(totalJappa);
 
-            sb.append("Total Jappa: ").append(String.format(Locale.getDefault(), "%.2f", totalJappa)).append("\n");
-
-            if (cutoffSwitch.isChecked()) {
-                double cutoffAmt = totalJappa * 0.28;
-                sb.append("Cut Off Jappa (28%): ").append(String.format(Locale.getDefault(), "%.2f", cutoffAmt)).append("\n");
-                sb.append("Balance Amount: ").append(String.format(Locale.getDefault(), "%.2f", totalJappa - cutoffAmt)).append("\n");
-            }
-
-            BarcodeEncoder barcodeEncoder = new BarcodeEncoder();
-            Bitmap bitmap = barcodeEncoder.encodeBitmap(sb.toString(), BarcodeFormat.QR_CODE, 600, 600);
-            qrCodeImage.setImageBitmap(bitmap);
+            BarcodeEncoder enc = new BarcodeEncoder();
+            Bitmap bmp = enc.encodeBitmap(sb.toString(), BarcodeFormat.QR_CODE, 600, 600);
+            qrCodeImage.setImageBitmap(bmp);
             qrCodeImage.setVisibility(View.VISIBLE);
             lastUpdated.setText("Last updated: " + lastDate);
-
         } catch (Exception e) {
-            e.printStackTrace();
-            Toast.makeText(this, "Error creating QR Code", Toast.LENGTH_SHORT).show();
+            showError("QR error: " + e.getMessage());
         }
+    }
+
+    private void showError(String msg) {
+        Toast.makeText(this, msg, Toast.LENGTH_LONG).show();
+
+        // Also show on screen for devices that suppress Toasts
+        TextView err = new TextView(this);
+        err.setText(msg);
+        err.setTextSize(16);
+        setContentView(err);
     }
 }
