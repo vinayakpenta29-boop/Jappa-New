@@ -22,7 +22,7 @@ public class MainActivity extends AppCompatActivity {
 
     private double totalJappa = 0;
     private int rowCount = 0;
-    private List<Salesman> dataList = new ArrayList<>();
+    private final List<Salesman> dataList = new ArrayList<>();
     private String lastDate = "";
 
     @Override
@@ -30,99 +30,123 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // Bind Views
-        tableLayout = findViewById(R.id.tableLayout);
-        salesmanNo = findViewById(R.id.salesmanNo);
-        barcode = findViewById(R.id.barcode);
-        millRate = findViewById(R.id.millRate);
-        billNo = findViewById(R.id.billNo);
-        jappa = findViewById(R.id.jappa);
-        datePicker = findViewById(R.id.datePicker);
-        addBtn = findViewById(R.id.addBtn);
-        qrSwitch = findViewById(R.id.qrSwitch);
-        cutoffSwitch = findViewById(R.id.cutoffSwitch);
-        qrCodeImage = findViewById(R.id.qrCodeImage);
-        lastUpdated = findViewById(R.id.lastUpdated);
-        totalJappaText = findViewById(R.id.totalJappaText);
-        cutoffJappaText = findViewById(R.id.cutoffJappaText);
-        balanceText = findViewById(R.id.balanceText);
+        try {
+            // Bind Views (make sure all IDs exist in activity_main.xml)
+            tableLayout = findViewById(R.id.tableLayout);
+            salesmanNo = findViewById(R.id.salesmanNo);
+            barcode = findViewById(R.id.barcode);
+            millRate = findViewById(R.id.millRate);
+            billNo = findViewById(R.id.billNo);
+            jappa = findViewById(R.id.jappa);
+            datePicker = findViewById(R.id.datePicker);
+            addBtn = findViewById(R.id.addBtn);
+            qrSwitch = findViewById(R.id.qrSwitch);
+            cutoffSwitch = findViewById(R.id.cutoffSwitch);
+            qrCodeImage = findViewById(R.id.qrCodeImage);
+            lastUpdated = findViewById(R.id.lastUpdated);
+            totalJappaText = findViewById(R.id.totalJappaText);
+            cutoffJappaText = findViewById(R.id.cutoffJappaText);
+            balanceText = findViewById(R.id.balanceText);
 
-        // Button listener
-        addBtn.setOnClickListener(v -> addRow());
-        qrSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> toggleQRCode());
-        cutoffSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            // Prevent null crashes if layout IDs mismatch
+            if (tableLayout == null || salesmanNo == null) {
+                Toast.makeText(this, "Layout binding error: check activity_main.xml IDs.", Toast.LENGTH_LONG).show();
+                return;
+            }
+
+            // Set Listeners
+            addBtn.setOnClickListener(v -> addRow());
+            qrSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> toggleQRCode());
+            cutoffSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                updateTotals();
+                updateQRCode();
+            });
+
+            updateTable();
             updateTotals();
-            updateQRCode();
-        });
-
-        updateTable();
-        updateTotals();
+        } catch (Exception e) {
+            e.printStackTrace();
+            Toast.makeText(this, "Initialization error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+        }
     }
 
     private void addRow() {
-        String sNo = salesmanNo.getText().toString().trim();
-        String bc = barcode.getText().toString().trim();
-        String mr = millRate.getText().toString().trim();
-        String bill = billNo.getText().toString().trim();
-        String jp = jappa.getText().toString().trim();
-
-        int day = datePicker.getDayOfMonth();
-        int month = datePicker.getMonth();
-        int year = datePicker.getYear();
-        Calendar cal = Calendar.getInstance();
-        cal.set(year, month, day);
-        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
-        String dateStr = sdf.format(cal.getTime());
-
-        if (sNo.isEmpty() || bc.isEmpty() || mr.isEmpty() || bill.isEmpty() || jp.isEmpty()) {
-            Toast.makeText(this, "Fill all fields", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        double jappaVal;
         try {
-            jappaVal = Double.parseDouble(jp);
+            String sNo = salesmanNo.getText().toString().trim();
+            String bc = barcode.getText().toString().trim();
+            String mr = millRate.getText().toString().trim();
+            String bill = billNo.getText().toString().trim();
+            String jp = jappa.getText().toString().trim();
+
+            int day = datePicker.getDayOfMonth();
+            int month = datePicker.getMonth();
+            int year = datePicker.getYear();
+
+            Calendar cal = Calendar.getInstance();
+            cal.set(year, month, day);
+            SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
+            String dateStr = sdf.format(cal.getTime());
+
+            if (sNo.isEmpty() || bc.isEmpty() || mr.isEmpty() || bill.isEmpty() || jp.isEmpty()) {
+                Toast.makeText(this, "Please fill all fields", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            double jappaVal;
+            try {
+                jappaVal = Double.parseDouble(jp);
+            } catch (Exception e) {
+                Toast.makeText(this, "Jappa must be a number", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            rowCount++;
+            lastDate = dateStr;
+            totalJappa += jappaVal;
+
+            dataList.add(new Salesman(rowCount, sNo, bc, mr, bill, dateStr, jappaVal));
+            updateTable();
+            updateTotals();
+            updateQRCode();
+
+            // Clear fields except salesman number
+            barcode.setText("");
+            millRate.setText("");
+            billNo.setText("");
+            jappa.setText("");
         } catch (Exception e) {
-            Toast.makeText(this, "Jappa must be a number", Toast.LENGTH_SHORT).show();
-            return;
+            e.printStackTrace();
+            Toast.makeText(this, "Error adding row: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
-
-        rowCount++;
-        lastDate = dateStr;
-        totalJappa += jappaVal;
-
-        dataList.add(new Salesman(rowCount, sNo, bc, mr, bill, dateStr, jappaVal));
-        updateTable();
-        updateTotals();
-        updateQRCode();
-
-        // Clear fields except salesman number
-        barcode.setText("");
-        millRate.setText("");
-        billNo.setText("");
-        jappa.setText("");
     }
 
     private void updateTable() {
-        // Remove dynamic rows but keep first and last rows (header/footer)
-        int childCount = tableLayout.getChildCount();
-        if (childCount > 2) {
-            tableLayout.removeViews(1, childCount - 2);
-        }
-        for (Salesman s : dataList) {
-            TableRow tr = new TableRow(this);
-            for (String val : s.toArray()) {
-                TextView tv = new TextView(this);
-                tv.setText(val);
-                tv.setPadding(6, 6, 6, 6);
-                tr.addView(tv);
+        try {
+            // Remove dynamic rows: keep header (index 0) and footer (last)
+            int childCount = tableLayout.getChildCount();
+            if (childCount > 2) {
+                tableLayout.removeViews(1, childCount - 2);
             }
-            tableLayout.addView(tr, tableLayout.getChildCount() - 1);
+
+            for (Salesman s : dataList) {
+                TableRow tr = new TableRow(this);
+                for (String val : s.toArray()) {
+                    TextView tv = new TextView(this);
+                    tv.setText(val);
+                    tv.setPadding(6, 6, 6, 6);
+                    tr.addView(tv);
+                }
+                tableLayout.addView(tr, tableLayout.getChildCount() - 1);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            Toast.makeText(this, "Error updating table", Toast.LENGTH_SHORT).show();
         }
     }
 
     private void updateTotals() {
         totalJappaText.setText("Total Jappa: " + String.format(Locale.getDefault(), "%.2f", totalJappa));
+
         if (cutoffSwitch.isChecked()) {
             double cutoffAmt = totalJappa * 0.28;
             cutoffJappaText.setText("Cut Off Jappa (28%): " + String.format(Locale.getDefault(), "%.2f", cutoffAmt));
@@ -141,33 +165,74 @@ public class MainActivity extends AppCompatActivity {
             lastUpdated.setText("");
             return;
         }
-        StringBuilder sb = new StringBuilder();
-        for (Salesman s : dataList) {
-            sb.append(s.toDelimitedString()).append("
-");
-        }
-        sb.append("Total Jappa: ").append(String.format(Locale.getDefault(), "%.2f", totalJappa)).append("
-");
-        if (cutoffSwitch.isChecked()) {
-            double cutoffAmt = totalJappa * 0.28;
-            sb.append("Cut Off Jappa (28%): ").append(String.format(Locale.getDefault(), "%.2f", cutoffAmt)).append("
-");
-            sb.append("Balance Amount: ").append(String.format(Locale.getDefault(), "%.2f", totalJappa - cutoffAmt)).append("
-");
-        }
+
         try {
+            StringBuilder sb = new StringBuilder();
+            for (Salesman s : dataList) {
+                sb.append(s.toDelimitedString()).append("\n");
+            }
+
+            sb.append("Total Jappa: ")
+              .append(String.format(Locale.getDefault(), "%.2f", totalJappa))
+              .append("\n");
+
+            if (cutoffSwitch.isChecked()) {
+                double cutoffAmt = totalJappa * 0.28;
+                sb.append("Cut Off Jappa (28%): ")
+                  .append(String.format(Locale.getDefault(), "%.2f", cutoffAmt))
+                  .append("\n");
+                sb.append("Balance Amount: ")
+                  .append(String.format(Locale.getDefault(), "%.2f", totalJappa - cutoffAmt))
+                  .append("\n");
+            }
+
             BarcodeEncoder barcodeEncoder = new BarcodeEncoder();
-            Bitmap bitmap = barcodeEncoder.encodeBitmap(
-                sb.toString(), BarcodeFormat.QR_CODE, 600, 600);
+            Bitmap bitmap = barcodeEncoder.encodeBitmap(sb.toString(), BarcodeFormat.QR_CODE, 600, 600);
             qrCodeImage.setImageBitmap(bitmap);
             qrCodeImage.setVisibility(View.VISIBLE);
             lastUpdated.setText("Last updated: " + lastDate);
+
         } catch (Exception e) {
             e.printStackTrace();
+            Toast.makeText(this, "Error creating QR Code", Toast.LENGTH_SHORT).show();
         }
     }
 
     private void toggleQRCode() {
         updateQRCode();
     }
-                                                }
+
+    // Salesman class
+    public static class Salesman {
+        private final int no;
+        private final String sNo, bc, mr, bill, date;
+        private final double jappaVal;
+
+        public Salesman(int no, String sNo, String bc, String mr, String bill, String date, double jappaVal) {
+            this.no = no;
+            this.sNo = sNo;
+            this.bc = bc;
+            this.mr = mr;
+            this.bill = bill;
+            this.date = date;
+            this.jappaVal = jappaVal;
+        }
+
+        public String[] toArray() {
+            return new String[]{
+                String.valueOf(no),
+                sNo,
+                bc,
+                mr,
+                bill,
+                date,
+                String.format(Locale.getDefault(), "%.2f", jappaVal)
+            };
+        }
+
+        public String toDelimitedString() {
+            return no + ", " + sNo + ", " + bc + ", " + mr + ", " + bill + ", " + date + ", " +
+                    String.format(Locale.getDefault(), "%.2f", jappaVal);
+        }
+    }
+}
