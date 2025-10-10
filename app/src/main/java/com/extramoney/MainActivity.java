@@ -7,8 +7,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import com.journeyapps.barcodescanner.BarcodeEncoder; // ZXing dependency
+import com.google.zxing.BarcodeFormat;
 import android.graphics.Bitmap;
-import android.widget.ImageView;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -47,9 +47,8 @@ public class MainActivity extends AppCompatActivity {
         cutoffJappaText = findViewById(R.id.cutoffJappaText);
         balanceText = findViewById(R.id.balanceText);
 
-        // Set button listener
+        // Button listener
         addBtn.setOnClickListener(v -> addRow());
-
         qrSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> toggleQRCode());
         cutoffSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
             updateTotals();
@@ -97,7 +96,7 @@ public class MainActivity extends AppCompatActivity {
         updateTotals();
         updateQRCode();
 
-        // Only clear necessary fields
+        // Clear fields
         barcode.setText("");
         millRate.setText("");
         billNo.setText("");
@@ -105,7 +104,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void updateTable() {
-        // Remove old rows but keep header/footer rows
+        // Remove previous dynamic rows but keep first and last rows (header/footer)
         while (tableLayout.getChildCount() > 2) {
             tableLayout.removeViewAt(1);
         }
@@ -141,22 +140,24 @@ public class MainActivity extends AppCompatActivity {
             lastUpdated.setText("");
             return;
         }
-
         StringBuilder sb = new StringBuilder();
         for (Salesman s : dataList) {
-            sb.append(s.toDelimitedString()).append("");
+            sb.append(s.toDelimitedString()).append("
+");
         }
-        sb.append("Total Jappa: ").append(String.format("%.2f", totalJappa)).append("");
+        sb.append("Total Jappa: ").append(String.format("%.2f", totalJappa)).append("
+");
         if (cutoffSwitch.isChecked()) {
             double cutoffAmt = totalJappa * 0.28;
-            sb.append("Cut Off Jappa (28%): ").append(String.format("%.2f", cutoffAmt)).append("");
-            sb.append("Balance Amount: ").append(String.format("%.2f", totalJappa - cutoffAmt)).append("");
+            sb.append("Cut Off Jappa (28%): ").append(String.format("%.2f", cutoffAmt)).append("
+");
+            sb.append("Balance Amount: ").append(String.format("%.2f", totalJappa - cutoffAmt)).append("
+");
         }
         try {
             BarcodeEncoder barcodeEncoder = new BarcodeEncoder();
             Bitmap bitmap = barcodeEncoder.encodeBitmap(
-                sb.toString(),
-                com.google.zxing.BarcodeFormat.QR_CODE, 600, 600);
+                sb.toString(), BarcodeFormat.QR_CODE, 600, 600);
             qrCodeImage.setImageBitmap(bitmap);
             qrCodeImage.setVisibility(View.VISIBLE);
             lastUpdated.setText("Last updated: " + lastDate);
@@ -168,4 +169,4 @@ public class MainActivity extends AppCompatActivity {
     private void toggleQRCode() {
         updateQRCode();
     }
-}
+            }
