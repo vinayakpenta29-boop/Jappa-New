@@ -137,38 +137,33 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void updateQRCode() {
-        if (!qrSwitch.isChecked() || dataList.isEmpty()) {
-            qrCodeImage.setVisibility(View.GONE);
-            lastUpdated.setText("");
-            return;
-        }
-        StringBuilder sb = new StringBuilder();
-        for (Salesman s : dataList) {
-            sb.append(s.toDelimitedString()).append("
-");
-        }
-        sb.append("Total Jappa: ").append(String.format(Locale.getDefault(), "%.2f", totalJappa)).append("
-");
-        if (cutoffSwitch.isChecked()) {
-            double cutoffAmt = totalJappa * 0.28;
-            sb.append("Cut Off Jappa (28%): ").append(String.format(Locale.getDefault(), "%.2f", cutoffAmt)).append("
-");
-            sb.append("Balance Amount: ").append(String.format(Locale.getDefault(), "%.2f", totalJappa - cutoffAmt)).append("
-");
-        }
-        try {
-            BarcodeEncoder barcodeEncoder = new BarcodeEncoder();
-            Bitmap bitmap = barcodeEncoder.encodeBitmap(
-                sb.toString(), BarcodeFormat.QR_CODE, 600, 600);
-            qrCodeImage.setImageBitmap(bitmap);
-            qrCodeImage.setVisibility(View.VISIBLE);
-            lastUpdated.setText("Last updated: " + lastDate);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+    if (!qrSwitch.isChecked() || dataList.isEmpty()) {
+        qrCodeImage.setVisibility(View.GONE);
+        lastUpdated.setText("");
+        return;
     }
-
-    private void toggleQRCode() {
-        updateQRCode();
+    StringBuilder sb = new StringBuilder();
+    for (Salesman s : dataList) {
+        sb.append(s.toDelimitedString()).append("
+");
+    }
+    sb.append("Total Jappa: ").append(String.format(Locale.getDefault(), "%.2f", totalJappa)).append("
+");
+    if (cutoffSwitch.isChecked()) {
+        double cutoffAmt = totalJappa * 0.28;
+        sb.append("Cut Off Jappa (28%): ").append(String.format(Locale.getDefault(), "%.2f", cutoffAmt)).append("
+");
+        sb.append("Balance Amount: ").append(String.format(Locale.getDefault(), "%.2f", totalJappa - cutoffAmt)).append("
+");
+    }
+    try {
+        BarcodeEncoder barcodeEncoder = new BarcodeEncoder();
+        Bitmap bitmap = barcodeEncoder.encodeBitmap(
+            sb.toString(), BarcodeFormat.QR_CODE, 600, 600);
+        qrCodeImage.setImageBitmap(bitmap);
+        qrCodeImage.setVisibility(View.VISIBLE);
+        lastUpdated.setText("Last updated: " + lastDate);
+    } catch (Exception e) {
+        e.printStackTrace();
     }
 }
