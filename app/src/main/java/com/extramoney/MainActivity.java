@@ -6,7 +6,7 @@ import android.widget.*;
 import androidx.appcompat.app.AppCompatActivity;
 import java.text.SimpleDateFormat;
 import java.util.*;
-import com.journeyapps.barcodescanner.BarcodeEncoder; // ZXing dependency
+import com.journeyapps.barcodescanner.BarcodeEncoder;
 import com.google.zxing.BarcodeFormat;
 import android.graphics.Bitmap;
 
@@ -96,7 +96,7 @@ public class MainActivity extends AppCompatActivity {
         updateTotals();
         updateQRCode();
 
-        // Clear fields
+        // Clear fields except salesman number
         barcode.setText("");
         millRate.setText("");
         billNo.setText("");
@@ -104,28 +104,30 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void updateTable() {
-        // Remove previous dynamic rows but keep first and last rows (header/footer)
-        while (tableLayout.getChildCount() > 2) {
-            tableLayout.removeViewAt(1);
+        // Remove dynamic rows: keep header row (index 0) and footer row (last)
+        int childCount = tableLayout.getChildCount();
+        if (childCount > 2) {
+            tableLayout.removeViews(1, childCount - 2);
         }
         for (Salesman s : dataList) {
             TableRow tr = new TableRow(this);
             for (String val : s.toArray()) {
                 TextView tv = new TextView(this);
                 tv.setText(val);
-                tv.setPadding(6,6,6,6);
+                tv.setPadding(6, 6, 6, 6);
                 tr.addView(tv);
             }
+            // Insert before footer row, which is last
             tableLayout.addView(tr, tableLayout.getChildCount() - 1);
         }
     }
 
     private void updateTotals() {
-        totalJappaText.setText("Total Jappa: " + String.format("%.2f", totalJappa));
+        totalJappaText.setText("Total Jappa: " + String.format(Locale.getDefault(), "%.2f", totalJappa));
         if (cutoffSwitch.isChecked()) {
             double cutoffAmt = totalJappa * 0.28;
-            cutoffJappaText.setText("Cut Off Jappa (28%): " + String.format("%.2f", cutoffAmt));
-            balanceText.setText("Balance Amount: " + String.format("%.2f", totalJappa - cutoffAmt));
+            cutoffJappaText.setText("Cut Off Jappa (28%): " + String.format(Locale.getDefault(), "%.2f", cutoffAmt));
+            balanceText.setText("Balance Amount: " + String.format(Locale.getDefault(), "%.2f", totalJappa - cutoffAmt));
             cutoffJappaText.setVisibility(View.VISIBLE);
             balanceText.setVisibility(View.VISIBLE);
         } else {
@@ -142,13 +144,17 @@ public class MainActivity extends AppCompatActivity {
         }
         StringBuilder sb = new StringBuilder();
         for (Salesman s : dataList) {
-            sb.append(s.toDelimitedString()).append("");
+            sb.append(s.toDelimitedString()).append("
+");
         }
-        sb.append("Total Jappa: ").append(String.format("%.2f", totalJappa)).append("");
+        sb.append("Total Jappa: ").append(String.format(Locale.getDefault(), "%.2f", totalJappa)).append("
+");
         if (cutoffSwitch.isChecked()) {
             double cutoffAmt = totalJappa * 0.28;
-            sb.append("Cut Off Jappa (28%): ").append(String.format("%.2f", cutoffAmt)).append("");
-            sb.append("Balance Amount: ").append(String.format("%.2f", totalJappa - cutoffAmt)).append("");
+            sb.append("Cut Off Jappa (28%): ").append(String.format(Locale.getDefault(), "%.2f", cutoffAmt)).append("
+");
+            sb.append("Balance Amount: ").append(String.format(Locale.getDefault(), "%.2f", totalJappa - cutoffAmt)).append("
+");
         }
         try {
             BarcodeEncoder barcodeEncoder = new BarcodeEncoder();
@@ -157,7 +163,7 @@ public class MainActivity extends AppCompatActivity {
             qrCodeImage.setImageBitmap(bitmap);
             qrCodeImage.setVisibility(View.VISIBLE);
             lastUpdated.setText("Last updated: " + lastDate);
-        } catch(Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
