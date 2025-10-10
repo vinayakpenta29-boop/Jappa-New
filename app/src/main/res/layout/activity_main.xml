@@ -72,7 +72,7 @@
                 </TableRow>
                 <!-- Dynamic rows here -->
                 <TableRow>
-                    <TextView android:id="@+id/totalJappaText" android:layout_span="6" android:text="Total Jappa: 0"/>
+                    <TextView android:id="@+id/totalJappaText" android:text="Total Jappa: 0"/>
                 </TableRow>
             </TableLayout>
         </HorizontalScrollView>
