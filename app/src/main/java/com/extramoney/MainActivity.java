@@ -136,16 +136,12 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
         StringBuilder sb = new StringBuilder();
-        for (Salesman s : dataList) sb.append(s.toDelimitedString()).append("
-");
-        sb.append("Total Jappa: ").append(String.format(Locale.getDefault(), "%.2f", totalJappa)).append("
-");
+        for (Salesman s : dataList) sb.append(s.toDelimitedString()).append("");
+        sb.append("Total Jappa: ").append(String.format(Locale.getDefault(), "%.2f", totalJappa)).append("");
         if (cutoffSwitch.isChecked()) {
             double cutoffAmt = totalJappa * 0.28;
-            sb.append("Cut Off Jappa (28%): ").append(String.format(Locale.getDefault(), "%.2f", cutoffAmt)).append("
-");
-            sb.append("Balance Amount: ").append(String.format(Locale.getDefault(), "%.2f", totalJappa - cutoffAmt)).append("
-");
+            sb.append("Cut Off Jappa (28%): ").append(String.format(Locale.getDefault(), "%.2f", cutoffAmt)).append("");
+            sb.append("Balance Amount: ").append(String.format(Locale.getDefault(), "%.2f", totalJappa - cutoffAmt)).append("");
         }
 
         try {
