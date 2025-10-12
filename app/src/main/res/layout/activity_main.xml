@@ -24,38 +24,56 @@
             android:gravity="center"
             android:layout_marginBottom="8dp">
 
-            <EditText
-                android:id="@+id/salesmanNo"
-                android:hint="Salesman No."
-                android:inputType="number"
+            <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="0dp"
                 android:layout_weight="1"
                 android:layout_height="wrap_content"
-                android:background="@drawable/curved_input"
-                android:padding="12dp"
-                android:layout_margin="4dp"/>
+                app:hintTextAppearance="@style/SmallHintAppearance">
 
-            <EditText
-                android:id="@+id/barcode"
-                android:hint="Barcode"
-                android:inputType="number"
-                android:layout_width="0dp"
-                android:layout_weight="1"
-                android:layout_height="wrap_content"
-                android:background="@drawable/curved_input"
-                android:padding="12dp"
-                android:layout_margin="4dp"/>
+                <EditText
+                    android:id="@+id/salesmanNo"
+                    android:hint="Salesman No."
+                    android:inputType="number"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/curved_input"
+                    android:padding="12dp"
+                    android:textSize="16sp"/>
+            </com.google.android.material.textfield.TextInputLayout>
 
-            <EditText
-                android:id="@+id/millRate"
-                android:hint="Mill Rate"
-                android:inputType="numberDecimal"
+            <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="0dp"
                 android:layout_weight="1"
                 android:layout_height="wrap_content"
-                android:background="@drawable/curved_input"
-                android:padding="12dp"
-                android:layout_margin="4dp"/>
+                app:hintTextAppearance="@style/SmallHintAppearance">
+
+                <EditText
+                    android:id="@+id/barcode"
+                    android:hint="Barcode"
+                    android:inputType="number"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/curved_input"
+                    android:padding="12dp"
+                    android:textSize="16sp"/>
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                app:hintTextAppearance="@style/SmallHintAppearance">
+
+                <EditText
+                    android:id="@+id/millRate"
+                    android:hint="Mill Rate"
+                    android:inputType="numberDecimal"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/curved_input"
+                    android:padding="12dp"
+                    android:textSize="16sp"/>
+            </com.google.android.material.textfield.TextInputLayout>
         </LinearLayout>
 
         <!-- Row 2 -->
@@ -66,16 +84,22 @@
             android:gravity="center"
             android:layout_marginBottom="8dp">
 
-            <EditText
-                android:id="@+id/billNo"
-                android:hint="Bill No."
-                android:inputType="number"
+            <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="0dp"
                 android:layout_weight="1"
                 android:layout_height="wrap_content"
-                android:background="@drawable/curved_input"
-                android:padding="12dp"
-                android:layout_margin="4dp"/>
+                app:hintTextAppearance="@style/SmallHintAppearance">
+
+                <EditText
+                    android:id="@+id/billNo"
+                    android:hint="Bill No."
+                    android:inputType="number"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/curved_input"
+                    android:padding="12dp"
+                    android:textSize="16sp"/>
+            </com.google.android.material.textfield.TextInputLayout>
 
             <!-- Date Box -->
             <LinearLayout
@@ -104,16 +128,22 @@
                     android:focusable="true"/>
             </LinearLayout>
 
-            <EditText
-                android:id="@+id/jappa"
-                android:hint="Jappa (Amount)"
-                android:inputType="numberDecimal"
+            <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="0dp"
                 android:layout_weight="1"
                 android:layout_height="wrap_content"
-                android:background="@drawable/curved_input"
-                android:padding="12dp"
-                android:layout_margin="4dp"/>
+                app:hintTextAppearance="@style/SmallHintAppearance">
+
+                <EditText
+                    android:id="@+id/jappa"
+                    android:hint="Jappa (Amount)"
+                    android:inputType="numberDecimal"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/curved_input"
+                    android:padding="12dp"
+                    android:textSize="16sp"/>
+            </com.google.android.material.textfield.TextInputLayout>
         </LinearLayout>
 
         <Button
