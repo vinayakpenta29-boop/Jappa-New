@@ -101,6 +101,7 @@ public class MainActivity extends AppCompatActivity {
             TextView tv = new TextView(this);
             tv.setText(val);
             tv.setPadding(8, 8, 8, 8);
+            tv.setBackgroundResource(R.drawable.border_cell);
             tr.addView(tv);
         }
         tableLayout.addView(tr, tableLayout.getChildCount() - 1);
