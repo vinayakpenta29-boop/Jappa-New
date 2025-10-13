@@ -20,6 +20,7 @@ public class MainActivity extends AppCompatActivity {
     private Switch qrSwitch, cutoffSwitch;
     private ImageView qrCodeImage;
     private TextView lastUpdated, totalJappaText, cutoffJappaText, balanceText;
+    private TableRow cutoffRow, balanceRow;
 
     private double totalJappa = 0;
     private int rowCount = 0;
@@ -47,6 +48,8 @@ public class MainActivity extends AppCompatActivity {
         cutoffJappaText = findViewById(R.id.cutoffJappaText);
         balanceText = findViewById(R.id.balanceText);
         tableLayout = findViewById(R.id.tableLayout);
+        cutoffRow = findViewById(R.id.cutoffRow);
+        balanceRow = findViewById(R.id.balanceRow);
 
         dateText.setOnClickListener(v -> {
             int year = selectedDate.get(Calendar.YEAR);
@@ -104,7 +107,7 @@ public class MainActivity extends AppCompatActivity {
             tv.setBackgroundResource(R.drawable.border_cell);
             tr.addView(tv);
         }
-        tableLayout.addView(tr, tableLayout.getChildCount() - 1);
+        tableLayout.addView(tr, tableLayout.getChildCount() - 3); // Add before the footer rows (3: total, cutoff, balance)
 
         updateTotals();
         updateQRCode();
@@ -113,20 +116,19 @@ public class MainActivity extends AppCompatActivity {
         millRate.setText("");
         billNo.setText("");
         jappa.setText("");
-        // Don't clear the date/salesman number for convenient multiple entries
     }
 
     private void updateTotals() {
-        totalJappaText.setText("Total Jappa: " + String.format(Locale.getDefault(), "%.2f", totalJappa));
+        totalJappaText.setText(String.format(Locale.getDefault(), "%.2f", totalJappa));
         if (cutoffSwitch.isChecked()) {
             double cutoffAmt = totalJappa * 0.28;
-            cutoffJappaText.setText("Cut Off Jappa (28%): " + String.format(Locale.getDefault(), "%.2f", cutoffAmt));
-            balanceText.setText("Balance Amount: " + String.format(Locale.getDefault(), "%.2f", totalJappa - cutoffAmt));
-            cutoffJappaText.setVisibility(View.VISIBLE);
-            balanceText.setVisibility(View.VISIBLE);
+            cutoffJappaText.setText(String.format(Locale.getDefault(), "%.2f", cutoffAmt));
+            balanceText.setText(String.format(Locale.getDefault(), "%.2f", totalJappa - cutoffAmt));
+            cutoffRow.setVisibility(View.VISIBLE);
+            balanceRow.setVisibility(View.VISIBLE);
         } else {
-            cutoffJappaText.setVisibility(View.GONE);
-            balanceText.setVisibility(View.GONE);
+            cutoffRow.setVisibility(View.GONE);
+            balanceRow.setVisibility(View.GONE);
         }
     }
 
@@ -155,4 +157,4 @@ public class MainActivity extends AppCompatActivity {
             e.printStackTrace();
         }
     }
-}
+            }
