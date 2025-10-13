@@ -211,6 +211,7 @@
                 android:layout_height="wrap_content"
                 android:stretchColumns="*">
 
+                <!-- Table header -->
                 <TableRow>
                     <TextView android:text="No." android:padding="8dp" android:textStyle="bold" android:background="@drawable/border_cell"/>
                     <TextView android:text="S. No." android:padding="8dp" android:textStyle="bold" android:background="@drawable/border_cell"/>
@@ -221,42 +222,65 @@
                     <TextView android:text="Jappa" android:padding="8dp" android:textStyle="bold" android:background="@drawable/border_cell"/>
                 </TableRow>
 
+                <!-- Data rows will be added programmatically -->
+
+                <!-- Total Jappa row -->
                 <TableRow>
-
                     <TextView
-                        android:text=""
+                        android:layout_span="6"
+                        android:text="Total Jappa:"
+                        android:gravity="right"
+                        android:textStyle="bold"
                         android:background="@drawable/border_cell"
-                        android:padding="8dp"
-                        android:layout_span="6"/>
-
-                    
+                        android:padding="8dp"/>
                     <TextView
                         android:id="@+id/totalJappaText"
-                        android:text="Total Jappa: 0"
+                        android:text="0.00"
+                        android:gravity="right"
                         android:textStyle="bold"
                         android:background="@drawable/border_cell"
                         android:padding="8dp"/>
                 </TableRow>
+                <!-- Cut Off row -->
+                <TableRow
+                    android:id="@+id/cutoffRow"
+                    android:visibility="gone">
+                    <TextView
+                        android:layout_span="6"
+                        android:text="Cut Off Jappa (28%):"
+                        android:gravity="right"
+                        android:textStyle="bold"
+                        android:background="@drawable/border_cell"
+                        android:padding="8dp" />
+                    <TextView
+                        android:id="@+id/cutoffJappaText"
+                        android:text="0.00"
+                        android:textStyle="bold"
+                        android:gravity="right"
+                        android:background="@drawable/border_cell"
+                        android:padding="8dp" />
+                </TableRow>
+                <!-- Balance row -->
+                <TableRow
+                    android:id="@+id/balanceRow"
+                    android:visibility="gone">
+                    <TextView
+                        android:layout_span="6"
+                        android:text="Balance Amount:"
+                        android:gravity="right"
+                        android:textStyle="bold"
+                        android:background="@drawable/border_cell"
+                        android:padding="8dp" />
+                    <TextView
+                        android:id="@+id/balanceText"
+                        android:text="0.00"
+                        android:gravity="right"
+                        android:textStyle="bold"
+                        android:background="@drawable/border_cell"
+                        android:padding="8dp" />
+                </TableRow>
             </TableLayout>
         </HorizontalScrollView>
-
-        <TextView
-            android:id="@+id/cutoffJappaText"
-            android:text="Cut Off Jappa"
-            android:visibility="gone"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="@drawable/border_cell"
-            android:padding="8dp" />
-
-        <TextView
-            android:id="@+id/balanceText"
-            android:text="Balance Amt"
-            android:visibility="gone"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="@drawable/border_cell"
-            android:padding="8dp" />
 
         <ImageView
             android:id="@+id/qrCodeImage"
@@ -273,7 +297,5 @@
             android:text=""
             android:layout_gravity="center"
             android:textSize="12sp" />
-        
-        
     </LinearLayout>
 </ScrollView>
