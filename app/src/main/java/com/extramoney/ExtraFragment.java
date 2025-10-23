@@ -2,6 +2,7 @@ package com.extramoney;
 
 import android.app.DatePickerDialog;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -13,18 +14,16 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import com.google.zxing.BarcodeFormat;
 import com.journeyapps.barcodescanner.BarcodeEncoder;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.List;
-import java.util.Locale;
+import org.json.JSONArray;
+import org.json.JSONObject;
+import java.util.*;
 
 public class ExtraFragment extends Fragment {
 
     private Calendar selectedDate = Calendar.getInstance();
-
     private double totalJappa = 0;
     private List<Double> jappaValues = new ArrayList<>();
-    private List<String[]> rowDataList = new ArrayList<>();
+    private List<String[]> rowDataList = new ArrayList<>(); // Use string array for table
     private String lastDate = "";
 
     private EditText salesmanNo, barcode, millRate, billNo, jappa;
@@ -79,54 +78,54 @@ public class ExtraFragment extends Fragment {
             }, year, month, day).show();
         });
 
-        addBtn.setOnClickListener(v -> addRowAndUpdate());
+        addBtn.setOnClickListener(v -> {
+            String sNo = salesmanNo.getText().toString().trim();
+            String bc = barcode.getText().toString().trim();
+            String mr = millRate.getText().toString().trim();
+            String bill = billNo.getText().toString().trim();
+            String jp = jappa.getText().toString().trim();
+            String dateStr = dateText.getText().toString();
+
+            if (sNo.isEmpty() || bc.isEmpty() || mr.isEmpty() || bill.isEmpty() || jp.isEmpty() || dateStr.equals("Tap to select date")) {
+                Toast.makeText(getContext(), "Fill all fields", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            double jappaVal;
+            try { jappaVal = Double.parseDouble(jp); }
+            catch (Exception e) { Toast.makeText(getContext(), "Jappa must be a number", Toast.LENGTH_SHORT).show(); return; }
+
+            lastDate = dateStr;
+            jappaValues.add(jappaVal);
+            rowDataList.add(new String[]{
+                    String.valueOf(rowDataList.size() + 1), sNo, bc, mr, bill, dateStr, String.format(Locale.getDefault(), "%.2f", jappaVal)
+            });
+
+            // Add row visually before summary/footer
+            TableRow tr = new TableRow(getContext());
+            for (String cell : rowDataList.get(rowDataList.size() - 1))
+                tr.addView(makeCell(getContext(), cell));
+            int insertIdx = Math.max(tableLayout.getChildCount() - 3, 1);
+            tableLayout.addView(tr, insertIdx);
+
+            barcode.setText("");
+            millRate.setText("");
+            billNo.setText("");
+            jappa.setText("");
+
+            updateSummaryRows();
+            updateQRCodeAndLastUpdated();
+            saveTableData();
+        });
 
         qrSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> updateQRCodeAndLastUpdated());
         cutoffSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
             updateSummaryRows();
             updateQRCodeAndLastUpdated();
+            saveTableData();
         });
 
-        updateSummaryRows();
-        updateQRCodeAndLastUpdated();
-    }
-
-    private void addRowAndUpdate() {
-        String sNo = salesmanNo.getText().toString().trim();
-        String bc = barcode.getText().toString().trim();
-        String mr = millRate.getText().toString().trim();
-        String bill = billNo.getText().toString().trim();
-        String jp = jappa.getText().toString().trim();
-        String dateStr = dateText.getText().toString();
-
-        if (sNo.isEmpty() || bc.isEmpty() || mr.isEmpty() || bill.isEmpty() || jp.isEmpty() || dateStr.equals("Tap to select date")) {
-            Toast.makeText(getContext(), "Fill all fields", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        double jappaVal;
-        try { jappaVal = Double.parseDouble(jp); }
-        catch (Exception e) { Toast.makeText(getContext(), "Jappa must be a number", Toast.LENGTH_SHORT).show(); return; }
-
-        // Track state for summary/QR
-        lastDate = dateStr;
-        jappaValues.add(jappaVal);
-        rowDataList.add(new String[]{
-                String.valueOf(rowDataList.size() + 1), sNo, bc, mr, bill, dateStr, String.format(Locale.getDefault(), "%.2f", jappaVal)
-        });
-
-        // Add row visually before summary
-        TableRow tr = new TableRow(getContext());
-        for (String cell : rowDataList.get(rowDataList.size() - 1))
-            tr.addView(makeCell(getContext(), cell));
-        int insertIdx = Math.max(tableLayout.getChildCount() - 3, 1);
-        tableLayout.addView(tr, insertIdx);
-
-        barcode.setText("");
-        millRate.setText("");
-        billNo.setText("");
-        jappa.setText("");
-
+        loadTableData(); // Load and visually re-create all rows and summary
         updateSummaryRows();
         updateQRCodeAndLastUpdated();
     }
@@ -161,13 +160,17 @@ public class ExtraFragment extends Fragment {
                 sb.append(row[i]);
                 if (i < row.length - 1) sb.append(" | ");
             }
-            sb.append("");
+            sb.append("
+");
         }
-        sb.append("Total Jappa: ").append(String.format(Locale.getDefault(), "%.2f", totalJappa)).append("");
+        sb.append("Total Jappa: ").append(String.format(Locale.getDefault(), "%.2f", totalJappa)).append("
+");
         if (cutoffSwitch.isChecked()) {
             double cutoffAmt = totalJappa * 0.28;
-            sb.append("Cut Off Jappa (28%): ").append(String.format(Locale.getDefault(), "%.2f", cutoffAmt)).append("");
-            sb.append("Balance Amount: ").append(String.format(Locale.getDefault(), "%.2f", totalJappa - cutoffAmt)).append("");
+            sb.append("Cut Off Jappa (28%): ").append(String.format(Locale.getDefault(), "%.2f", cutoffAmt)).append("
+");
+            sb.append("Balance Amount: ").append(String.format(Locale.getDefault(), "%.2f", totalJappa - cutoffAmt)).append("
+");
         }
 
         try {
@@ -189,5 +192,41 @@ public class ExtraFragment extends Fragment {
         tv.setPadding(8, 8, 8, 8);
         tv.setBackgroundResource(R.drawable.border_cell);
         return tv;
+    }
+
+    // --- Persistence ---
+    private void saveTableData() {
+        JSONArray json = new JSONArray();
+        for (String[] row : rowDataList) {
+            JSONArray arr = new JSONArray();
+            for (String cell : row) arr.put(cell);
+            json.put(arr);
+        }
+        requireContext().getSharedPreferences("jappa_prefs", Context.MODE_PRIVATE)
+            .edit().putString("table", json.toString()).apply();
+    }
+
+    private void loadTableData() {
+        SharedPreferences prefs = requireContext().getSharedPreferences("jappa_prefs", Context.MODE_PRIVATE);
+        String data = prefs.getString("table", null);
+        if (data == null) return;
+        try {
+            JSONArray json = new JSONArray(data);
+            for (int i = 0; i < json.length(); i++) {
+                JSONArray arr = json.getJSONArray(i);
+                String[] row = new String[arr.length()];
+                for (int j = 0; j < arr.length(); j++) row[j] = arr.getString(j);
+                rowDataList.add(row);
+                double val = Double.parseDouble(row[row.length - 1]);
+                jappaValues.add(val);
+                TableRow tr = new TableRow(getContext());
+                for (String cell : row) tr.addView(makeCell(getContext(), cell));
+                int insertIdx = Math.max(tableLayout.getChildCount() - 3, 1);
+                tableLayout.addView(tr, insertIdx);
+            }
+            if (!rowDataList.isEmpty()) {
+                lastDate = rowDataList.get(rowDataList.size()-1)[5];
+            }
+        } catch (Exception ignore) {}
     }
 }
