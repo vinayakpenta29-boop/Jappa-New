@@ -9,45 +9,51 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+import com.bumptech.glide.Glide;
 import java.util.*;
 
-public class PhotosAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
+public class PhotosAdapter extends RecyclerView.Adapter<PhotosAdapter.PhotoVH> {
 
     private final Context context;
-    private final Map<String, List<PhotoItem>> monthGroupMap;
-    private final List<String> months;
+    private final List<PhotoItem> allPhotos = new ArrayList<>();
 
+    // Build one flat photo list for display (sorted newest first)
     public PhotosAdapter(Context context, Map<String, List<PhotoItem>> monthGroupMap) {
         this.context = context;
-        this.monthGroupMap = monthGroupMap;
-        this.months = new ArrayList<>(monthGroupMap.keySet());
-    }
-
-    @Override
-    public int getItemCount() {
-        return months.size();
+        allPhotos.clear();
+        List<String> sortedMonths = new ArrayList<>(monthGroupMap.keySet());
+        Collections.sort(sortedMonths, Collections.reverseOrder());
+        for (String month : sortedMonths) {
+            allPhotos.addAll(monthGroupMap.get(month));
+        }
     }
 
     @NonNull
     @Override
-    public PhotosViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View v = LayoutInflater.from(context).inflate(android.R.layout.simple_list_item_1, parent, false);
-        return new PhotosViewHolder(v);
+    public PhotoVH onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        View v = LayoutInflater.from(context).inflate(R.layout.item_photo, parent, false);
+        return new PhotoVH(v);
     }
 
     @Override
-    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder h, int position) {
-        PhotosViewHolder holder = (PhotosViewHolder) h;
-        String label = months.get(position);
-        holder.textView.setText(label + " (" + monthGroupMap.get(label).size() + " images)");
-        // TODO: implement album/open-month logic, and use custom layout with thumbnails if desired
+    public void onBindViewHolder(@NonNull PhotoVH holder, int position) {
+        PhotoItem item = allPhotos.get(position);
+        holder.photoDate.setText(item.month + " " + item.year);
+        Glide.with(context).load(item.uri).centerCrop().into(holder.photoThumb);
     }
 
-    static class PhotosViewHolder extends RecyclerView.ViewHolder {
-        TextView textView;
-        PhotosViewHolder(View itemView) {
+    @Override
+    public int getItemCount() {
+        return allPhotos.size();
+    }
+
+    static class PhotoVH extends RecyclerView.ViewHolder {
+        ImageView photoThumb;
+        TextView photoDate;
+        PhotoVH(View itemView) {
             super(itemView);
-            textView = (TextView) itemView.findViewById(android.R.id.text1);
+            photoThumb = itemView.findViewById(R.id.photoThumb);
+            photoDate = itemView.findViewById(R.id.photoDate);
         }
     }
 }
