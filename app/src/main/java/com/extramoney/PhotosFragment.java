@@ -1,8 +1,9 @@
 package com.extramoney;
 
 import android.app.AlertDialog;
-import android.app.DatePickerDialog;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -17,19 +18,17 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.*;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import java.util.*;
 
 public class PhotosFragment extends Fragment {
 
     private Button uploadImageBtn;
     private RecyclerView photosRecycler;
-
-    // Basic example for images: List of Triplets (Uri, month, year)
-    private final List<PhotoItem> images = new ArrayList<>();
     private final Map<String, List<PhotoItem>> monthGroupMap = new LinkedHashMap<>();
     private PhotosAdapter adapter;
-
-    // Modern recommended activity result launcher
     private ActivityResultLauncher<Intent> pickImageLauncher;
 
     @Nullable
@@ -43,7 +42,6 @@ public class PhotosFragment extends Fragment {
         photosRecycler.setLayoutManager(new LinearLayoutManager(getContext()));
         photosRecycler.setAdapter(adapter);
 
-        // Register result launcher
         pickImageLauncher = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
             result -> {
@@ -59,11 +57,11 @@ public class PhotosFragment extends Fragment {
             pickImageLauncher.launch(intent);
         });
 
+        loadPhotosData();
         return v;
     }
 
     private void selectMonthAndYear(Uri imageUri) {
-        // Month picker
         final String[] months = new String[]{
             "January", "February", "March", "April", "May", "June", "July",
             "August", "September", "October", "November", "December"};
@@ -71,8 +69,6 @@ public class PhotosFragment extends Fragment {
                 .setTitle("Select Month")
                 .setItems(months, (dialog, which) -> {
                     String monthText = months[which];
-
-                    // Year input dialog
                     final EditText yearBox = new EditText(getContext());
                     yearBox.setHint("Enter Year");
                     yearBox.setInputType(InputType.TYPE_CLASS_NUMBER);
@@ -88,6 +84,7 @@ public class PhotosFragment extends Fragment {
                                         monthGroupMap.put(key, new ArrayList<>());
                                     }
                                     monthGroupMap.get(key).add(item);
+                                    savePhotosData();
                                     adapter.notifyDataSetChanged();
                                 }
                             })
@@ -95,6 +92,44 @@ public class PhotosFragment extends Fragment {
                             .show();
                 })
                 .show();
+    }
+
+    // --- Persistence ---
+    private void savePhotosData() {
+        JSONArray albumJson = new JSONArray();
+        for (Map.Entry<String, List<PhotoItem>> group : monthGroupMap.entrySet()) {
+            for (PhotoItem item : group.getValue()) {
+                JSONObject record = new JSONObject();
+                try {
+                    record.put("uri", item.uri.toString());
+                    record.put("month", item.month);
+                    record.put("year", item.year);
+                    albumJson.put(record);
+                } catch (JSONException ignore) {}
+            }
+        }
+        requireContext().getSharedPreferences("jappa_prefs", Context.MODE_PRIVATE)
+            .edit().putString("photos", albumJson.toString()).apply();
+    }
+
+    private void loadPhotosData() {
+        SharedPreferences prefs = requireContext().getSharedPreferences("jappa_prefs", Context.MODE_PRIVATE);
+        String data = prefs.getString("photos", null);
+        if (data == null) return;
+        try {
+            JSONArray arr = new JSONArray(data);
+            for (int i = 0; i < arr.length(); i++) {
+                JSONObject obj = arr.getJSONObject(i);
+                String month = obj.getString("month");
+                String year = obj.getString("year");
+                Uri uri = Uri.parse(obj.getString("uri"));
+                String key = month + ", " + year;
+                PhotoItem item = new PhotoItem(uri, month, year);
+                if (!monthGroupMap.containsKey(key)) monthGroupMap.put(key, new ArrayList<>());
+                monthGroupMap.get(key).add(item);
+            }
+            adapter.notifyDataSetChanged();
+        } catch (Exception ignore) {}
     }
 }
 
@@ -106,4 +141,4 @@ class PhotoItem {
     PhotoItem(Uri u, String m, String y) {
         uri = u; month = m; year = y;
     }
-}
+            }
