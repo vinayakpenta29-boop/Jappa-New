@@ -17,15 +17,19 @@ public class PhotosAdapter extends RecyclerView.Adapter<PhotosAdapter.PhotoVH> {
     private final Context context;
     private final List<PhotoItem> allPhotos = new ArrayList<>();
 
-    // Build one flat photo list for display (sorted newest first)
     public PhotosAdapter(Context context, Map<String, List<PhotoItem>> monthGroupMap) {
         this.context = context;
+        updateData(monthGroupMap);
+    }
+
+    public void updateData(Map<String, List<PhotoItem>> monthGroupMap) {
         allPhotos.clear();
         List<String> sortedMonths = new ArrayList<>(monthGroupMap.keySet());
         Collections.sort(sortedMonths, Collections.reverseOrder());
         for (String month : sortedMonths) {
             allPhotos.addAll(monthGroupMap.get(month));
         }
+        notifyDataSetChanged();
     }
 
     @NonNull
