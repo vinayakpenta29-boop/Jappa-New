@@ -17,7 +17,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.*;
-
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -47,6 +46,14 @@ public class PhotosFragment extends Fragment {
             result -> {
                 if (result.getResultCode() == getActivity().RESULT_OK && result.getData() != null) {
                     Uri imageUri = result.getData().getData();
+
+                    // Persist permission for future app launches (critical for Android 10/11+):
+                    try {
+                        requireContext().getContentResolver().takePersistableUriPermission(
+                                imageUri, Intent.FLAG_GRANT_READ_URI_PERMISSION
+                        );
+                    } catch (Exception ignore) {}
+
                     selectMonthAndYear(imageUri);
                 }
             });
@@ -85,7 +92,7 @@ public class PhotosFragment extends Fragment {
                                     }
                                     monthGroupMap.get(key).add(item);
                                     savePhotosData();
-                                    adapter.notifyDataSetChanged();
+                                    adapter.updateData(monthGroupMap);
                                 }
                             })
                             .setNegativeButton("Cancel", null)
@@ -94,7 +101,6 @@ public class PhotosFragment extends Fragment {
                 .show();
     }
 
-    // --- Persistence ---
     private void savePhotosData() {
         JSONArray albumJson = new JSONArray();
         for (Map.Entry<String, List<PhotoItem>> group : monthGroupMap.entrySet()) {
@@ -117,6 +123,7 @@ public class PhotosFragment extends Fragment {
         String data = prefs.getString("photos", null);
         if (data == null) return;
         try {
+            monthGroupMap.clear();
             JSONArray arr = new JSONArray(data);
             for (int i = 0; i < arr.length(); i++) {
                 JSONObject obj = arr.getJSONObject(i);
@@ -128,12 +135,11 @@ public class PhotosFragment extends Fragment {
                 if (!monthGroupMap.containsKey(key)) monthGroupMap.put(key, new ArrayList<>());
                 monthGroupMap.get(key).add(item);
             }
-            adapter.notifyDataSetChanged();
+            adapter.updateData(monthGroupMap);
         } catch (Exception ignore) {}
     }
 }
 
-// Helper class to hold photo and tags
 class PhotoItem {
     Uri uri;
     String month;
@@ -141,4 +147,4 @@ class PhotoItem {
     PhotoItem(Uri u, String m, String y) {
         uri = u; month = m; year = y;
     }
-            }
+}
