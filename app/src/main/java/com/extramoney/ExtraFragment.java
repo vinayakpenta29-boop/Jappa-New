@@ -2,6 +2,7 @@ package com.extramoney;
 
 import android.app.DatePickerDialog;
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -10,12 +11,29 @@ import android.widget.*;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import com.google.zxing.BarcodeFormat;
+import com.journeyapps.barcodescanner.BarcodeEncoder;
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.List;
 import java.util.Locale;
 
 public class ExtraFragment extends Fragment {
 
     private Calendar selectedDate = Calendar.getInstance();
+
+    private double totalJappa = 0;
+    private List<Double> jappaValues = new ArrayList<>();
+    private List<String[]> rowDataList = new ArrayList<>();
+    private String lastDate = "";
+
+    private EditText salesmanNo, barcode, millRate, billNo, jappa;
+    private TextView dateText, totalJappaText, cutoffJappaText, balanceText, lastUpdated;
+    private Button addBtn;
+    private Switch qrSwitch, cutoffSwitch;
+    private TableLayout tableLayout;
+    private TableRow cutoffRow, balanceRow;
+    private ImageView qrCodeImage;
 
     @Nullable
     @Override
@@ -24,7 +42,6 @@ public class ExtraFragment extends Fragment {
             @Nullable ViewGroup container,
             @Nullable Bundle savedInstanceState
     ) {
-        // Inflate your sales table UI (should be res/layout/fragment_extra.xml)
         return inflater.inflate(R.layout.fragment_extra, container, false);
     }
 
@@ -32,16 +49,26 @@ public class ExtraFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        EditText salesmanNo = view.findViewById(R.id.salesmanNo);
-        EditText barcode = view.findViewById(R.id.barcode);
-        EditText millRate = view.findViewById(R.id.millRate);
-        EditText billNo = view.findViewById(R.id.billNo);
-        EditText jappa = view.findViewById(R.id.jappa);
-        TextView dateText = view.findViewById(R.id.dateText);
-        Button addBtn = view.findViewById(R.id.addBtn);
-        TableLayout tableLayout = view.findViewById(R.id.tableLayout);
+        // Bind views
+        salesmanNo = view.findViewById(R.id.salesmanNo);
+        barcode = view.findViewById(R.id.barcode);
+        millRate = view.findViewById(R.id.millRate);
+        billNo = view.findViewById(R.id.billNo);
+        jappa = view.findViewById(R.id.jappa);
+        dateText = view.findViewById(R.id.dateText);
+        addBtn = view.findViewById(R.id.addBtn);
+        qrSwitch = view.findViewById(R.id.qrSwitch);
+        cutoffSwitch = view.findViewById(R.id.cutoffSwitch);
+        tableLayout = view.findViewById(R.id.tableLayout);
+        totalJappaText = view.findViewById(R.id.totalJappaText);
+        cutoffJappaText = view.findViewById(R.id.cutoffJappaText);
+        balanceText = view.findViewById(R.id.balanceText);
+        cutoffRow = view.findViewById(R.id.cutoffRow);
+        balanceRow = view.findViewById(R.id.balanceRow);
+        qrCodeImage = view.findViewById(R.id.qrCodeImage);
+        lastUpdated = view.findViewById(R.id.lastUpdated);
 
-        // Date picker dialog logic
+        // Date picker dialog
         dateText.setOnClickListener(v -> {
             int year = selectedDate.get(Calendar.YEAR);
             int month = selectedDate.get(Calendar.MONTH);
@@ -52,39 +79,111 @@ public class ExtraFragment extends Fragment {
             }, year, month, day).show();
         });
 
-        addBtn.setOnClickListener(v -> {
-            String sNo = salesmanNo.getText().toString().trim();
-            String bc = barcode.getText().toString().trim();
-            String mr = millRate.getText().toString().trim();
-            String bill = billNo.getText().toString().trim();
-            String jp = jappa.getText().toString().trim();
-            String dateStr = dateText.getText().toString();
+        addBtn.setOnClickListener(v -> addRowAndUpdate());
 
-            if (sNo.isEmpty() || bc.isEmpty() || mr.isEmpty() || bill.isEmpty() || jp.isEmpty() || dateStr.equals("Tap to select date")) {
-                Toast.makeText(getContext(), "Fill all fields", Toast.LENGTH_SHORT).show();
-                return;
-            }
-
-            // Add table row (before summary/footer)
-            TableRow tr = new TableRow(getContext());
-            tr.addView(makeCell(getContext(), String.valueOf(getCurrentRowNumber(tableLayout))));
-            tr.addView(makeCell(getContext(), sNo));
-            tr.addView(makeCell(getContext(), bc));
-            tr.addView(makeCell(getContext(), mr));
-            tr.addView(makeCell(getContext(), bill));
-            tr.addView(makeCell(getContext(), dateStr));
-            tr.addView(makeCell(getContext(), jp));
-
-            // Insert before the last 3 summary/footer rows
-            int footerIdx = Math.max(tableLayout.getChildCount() - 3, 1);
-            tableLayout.addView(tr, footerIdx);
-
-            // Optionally, clear inputs for new entry
-            barcode.setText("");
-            millRate.setText("");
-            billNo.setText("");
-            jappa.setText("");
+        qrSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> updateQRCodeAndLastUpdated());
+        cutoffSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            updateSummaryRows();
+            updateQRCodeAndLastUpdated();
         });
+
+        updateSummaryRows();
+        updateQRCodeAndLastUpdated();
+    }
+
+    private void addRowAndUpdate() {
+        String sNo = salesmanNo.getText().toString().trim();
+        String bc = barcode.getText().toString().trim();
+        String mr = millRate.getText().toString().trim();
+        String bill = billNo.getText().toString().trim();
+        String jp = jappa.getText().toString().trim();
+        String dateStr = dateText.getText().toString();
+
+        if (sNo.isEmpty() || bc.isEmpty() || mr.isEmpty() || bill.isEmpty() || jp.isEmpty() || dateStr.equals("Tap to select date")) {
+            Toast.makeText(getContext(), "Fill all fields", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        double jappaVal;
+        try { jappaVal = Double.parseDouble(jp); }
+        catch (Exception e) { Toast.makeText(getContext(), "Jappa must be a number", Toast.LENGTH_SHORT).show(); return; }
+
+        // Track state for summary/QR
+        lastDate = dateStr;
+        jappaValues.add(jappaVal);
+        rowDataList.add(new String[]{
+                String.valueOf(rowDataList.size() + 1), sNo, bc, mr, bill, dateStr, String.format(Locale.getDefault(), "%.2f", jappaVal)
+        });
+
+        // Add row visually before summary
+        TableRow tr = new TableRow(getContext());
+        for (String cell : rowDataList.get(rowDataList.size() - 1))
+            tr.addView(makeCell(getContext(), cell));
+        int insertIdx = Math.max(tableLayout.getChildCount() - 3, 1);
+        tableLayout.addView(tr, insertIdx);
+
+        barcode.setText("");
+        millRate.setText("");
+        billNo.setText("");
+        jappa.setText("");
+
+        updateSummaryRows();
+        updateQRCodeAndLastUpdated();
+    }
+
+    private void updateSummaryRows() {
+        totalJappa = 0;
+        for (double val : jappaValues) totalJappa += val;
+        totalJappaText.setText(String.format(Locale.getDefault(), "%.2f", totalJappa));
+
+        if (cutoffSwitch.isChecked()) {
+            double cutoffAmt = totalJappa * 0.28;
+            cutoffJappaText.setText(String.format(Locale.getDefault(), "%.2f", cutoffAmt));
+            balanceText.setText(String.format(Locale.getDefault(), "%.2f", totalJappa - cutoffAmt));
+            cutoffRow.setVisibility(View.VISIBLE);
+            balanceRow.setVisibility(View.VISIBLE);
+        } else {
+            cutoffRow.setVisibility(View.GONE);
+            balanceRow.setVisibility(View.GONE);
+        }
+    }
+
+    private void updateQRCodeAndLastUpdated() {
+        if (!qrSwitch.isChecked() || rowDataList.isEmpty()) {
+            qrCodeImage.setVisibility(View.GONE);
+            lastUpdated.setText("");
+            return;
+        }
+
+        StringBuilder sb = new StringBuilder();
+        for (String[] row : rowDataList) {
+            for (int i = 0; i < row.length; i++) {
+                sb.append(row[i]);
+                if (i < row.length - 1) sb.append(" | ");
+            }
+            sb.append("
+");
+        }
+        sb.append("Total Jappa: ").append(String.format(Locale.getDefault(), "%.2f", totalJappa)).append("
+");
+        if (cutoffSwitch.isChecked()) {
+            double cutoffAmt = totalJappa * 0.28;
+            sb.append("Cut Off Jappa (28%): ").append(String.format(Locale.getDefault(), "%.2f", cutoffAmt)).append("
+");
+            sb.append("Balance Amount: ").append(String.format(Locale.getDefault(), "%.2f", totalJappa - cutoffAmt)).append("
+");
+        }
+
+        try {
+            BarcodeEncoder enc = new BarcodeEncoder();
+            Bitmap bmp = enc.encodeBitmap(sb.toString(), BarcodeFormat.QR_CODE, 600, 600);
+            qrCodeImage.setImageBitmap(bmp);
+            qrCodeImage.setVisibility(View.VISIBLE);
+        } catch (Exception e) {
+            qrCodeImage.setVisibility(View.GONE);
+        }
+
+        lastUpdated.setText(rowDataList.isEmpty() ? "" : ("Last updated: " + lastDate));
     }
 
     // Returns a boxed (bordered) TextView for a table cell
@@ -94,11 +193,5 @@ public class ExtraFragment extends Fragment {
         tv.setPadding(8, 8, 8, 8);
         tv.setBackgroundResource(R.drawable.border_cell);
         return tv;
-    }
-
-    // Figure out the serial number for the new row (excluding header and footer rows)
-    private int getCurrentRowNumber(TableLayout tableLayout) {
-        // 1 header, 3 footer rows
-        return Math.max(tableLayout.getChildCount() - 3, 1);
     }
 }
