@@ -10,6 +10,10 @@ import androidx.fragment.app.Fragment;
 
 /**
  * Fragment to host your main Extra (sales table) UI.
+ * 
+ * IMPORTANT:
+ * Inflates fragment_extra.xml, NOT activity_main.xml!
+ * (fragment_extra.xml should contain your ScrollView+LinearLayout+table etc.)
  */
 public class ExtraFragment extends Fragment {
 
@@ -20,7 +24,7 @@ public class ExtraFragment extends Fragment {
             @Nullable ViewGroup container,
             @Nullable Bundle savedInstanceState
     ) {
-        // Inflate activity_main.xml as the content view for this fragment
-        return inflater.inflate(R.layout.activity_main, container, false);
+        // Use fragment_extra.xml as the layout for this fragment
+        return inflater.inflate(R.layout.fragment_extra, container, false);
     }
 }
