@@ -160,17 +160,13 @@ public class ExtraFragment extends Fragment {
                 sb.append(row[i]);
                 if (i < row.length - 1) sb.append(" | ");
             }
-            sb.append("
-");
+            sb.append("");
         }
-        sb.append("Total Jappa: ").append(String.format(Locale.getDefault(), "%.2f", totalJappa)).append("
-");
+        sb.append("Total Jappa: ").append(String.format(Locale.getDefault(), "%.2f", totalJappa)).append("");
         if (cutoffSwitch.isChecked()) {
             double cutoffAmt = totalJappa * 0.28;
-            sb.append("Cut Off Jappa (28%): ").append(String.format(Locale.getDefault(), "%.2f", cutoffAmt)).append("
-");
-            sb.append("Balance Amount: ").append(String.format(Locale.getDefault(), "%.2f", totalJappa - cutoffAmt)).append("
-");
+            sb.append("Cut Off Jappa (28%): ").append(String.format(Locale.getDefault(), "%.2f", cutoffAmt)).append("");
+            sb.append("Balance Amount: ").append(String.format(Locale.getDefault(), "%.2f", totalJappa - cutoffAmt)).append("");
         }
 
         try {
