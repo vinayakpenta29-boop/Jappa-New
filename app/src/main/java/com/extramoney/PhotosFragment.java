@@ -51,7 +51,7 @@ public class PhotosFragment extends Fragment {
             requireActivity()
                 .getSupportFragmentManager()
                 .beginTransaction()
-                .replace(R.id.fragment_container, fragment) // <-- container id for fragment content
+                .replace(R.id.photos_sub_fragment_container, fragment) // <-- container id for fragment content
                 .addToBackStack(null)
                 .commit();
         });
