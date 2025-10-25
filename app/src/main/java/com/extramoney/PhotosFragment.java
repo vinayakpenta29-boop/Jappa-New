@@ -17,6 +17,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.*;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -25,9 +26,10 @@ import java.util.*;
 public class PhotosFragment extends Fragment {
 
     private Button uploadImageBtn;
-    private RecyclerView photosRecycler;
+    private RecyclerView albumsRecycler;
     private final Map<String, List<PhotoItem>> monthGroupMap = new LinkedHashMap<>();
-    private PhotosAdapter adapter;
+    private List<Album> albumList = new ArrayList<>();
+    private AlbumAdapter albumAdapter;
     private ActivityResultLauncher<Intent> pickImageLauncher;
 
     @Nullable
@@ -35,11 +37,25 @@ public class PhotosFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View v = inflater.inflate(R.layout.photos_fragment, container, false);
         uploadImageBtn = v.findViewById(R.id.uploadImageBtn);
-        photosRecycler = v.findViewById(R.id.photosRecycler);
+        albumsRecycler = v.findViewById(R.id.photosRecycler);
 
-        adapter = new PhotosAdapter(requireContext(), monthGroupMap);
-        photosRecycler.setLayoutManager(new LinearLayoutManager(getContext()));
-        photosRecycler.setAdapter(adapter);
+        // Albums display: use grid, 2 per row
+        albumsRecycler.setLayoutManager(new GridLayoutManager(getContext(), 2));
+
+        albumAdapter = new AlbumAdapter(requireContext(), albumList, album -> {
+            // Open AlbumPhotosFragment with album (via activity or nested fragment)
+            AlbumPhotosFragment fragment = AlbumPhotosFragment.newInstance(
+                    album.name,
+                    toUris(album.photoItems)
+            );
+            requireActivity()
+                .getSupportFragmentManager()
+                .beginTransaction()
+                .replace(R.id.fragment_container, fragment) // <-- container id for fragment content
+                .addToBackStack(null)
+                .commit();
+        });
+        albumsRecycler.setAdapter(albumAdapter);
 
         pickImageLauncher = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
@@ -47,7 +63,7 @@ public class PhotosFragment extends Fragment {
                 if (result.getResultCode() == getActivity().RESULT_OK && result.getData() != null) {
                     Uri imageUri = result.getData().getData();
 
-                    // Persist permission for future app launches (critical for Android 10/11+):
+                    // Persist permission for future app launches (android 10+ compatibility)
                     try {
                         requireContext().getContentResolver().takePersistableUriPermission(
                                 imageUri, Intent.FLAG_GRANT_READ_URI_PERMISSION
@@ -66,6 +82,13 @@ public class PhotosFragment extends Fragment {
 
         loadPhotosData();
         return v;
+    }
+
+    // Helper: convert to ArrayList<Uri>
+    private ArrayList<Uri> toUris(List<PhotoItem> items) {
+        ArrayList<Uri> uris = new ArrayList<>();
+        for (PhotoItem p : items) uris.add(p.uri);
+        return uris;
     }
 
     private void selectMonthAndYear(Uri imageUri) {
@@ -92,7 +115,7 @@ public class PhotosFragment extends Fragment {
                                     }
                                     monthGroupMap.get(key).add(item);
                                     savePhotosData();
-                                    adapter.updateData(monthGroupMap);
+                                    updateAlbums();
                                 }
                             })
                             .setNegativeButton("Cancel", null)
@@ -135,16 +158,16 @@ public class PhotosFragment extends Fragment {
                 if (!monthGroupMap.containsKey(key)) monthGroupMap.put(key, new ArrayList<>());
                 monthGroupMap.get(key).add(item);
             }
-            adapter.updateData(monthGroupMap);
+            updateAlbums();
         } catch (Exception ignore) {}
     }
-}
 
-class PhotoItem {
-    Uri uri;
-    String month;
-    String year;
-    PhotoItem(Uri u, String m, String y) {
-        uri = u; month = m; year = y;
+    // Build album list for album grid
+    private void updateAlbums() {
+        albumList.clear();
+        for (Map.Entry<String, List<PhotoItem>> entry : monthGroupMap.entrySet()) {
+            albumList.add(new Album(entry.getKey(), entry.getValue()));
+        }
+        albumAdapter.notifyDataSetChanged();
     }
 }
