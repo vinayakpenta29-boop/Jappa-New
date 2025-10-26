@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.viewpager2.widget.ViewPager2;
 import java.util.ArrayList;
@@ -12,6 +13,7 @@ public class FullscreenImageSliderActivity extends AppCompatActivity {
     public static final String EXTRA_URIS = "uris";
     public static final String EXTRA_INDEX = "index";
 
+    // Usage: FullscreenImageSliderActivity.open(context, uriList, index);
     public static void open(Context ctx, ArrayList<Uri> uris, int startIndex) {
         Intent i = new Intent(ctx, FullscreenImageSliderActivity.class);
         i.putParcelableArrayListExtra(EXTRA_URIS, uris);
@@ -20,7 +22,7 @@ public class FullscreenImageSliderActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.fullscreen_photo);
 
