@@ -11,9 +11,11 @@ import java.util.*;
 
 public class PhotoGridAdapter extends RecyclerView.Adapter<PhotoGridAdapter.PhotoVH> {
 
+    // Updated interface: returns both uri and index!
     public interface OnPhotoClickListener {
-        void onPhotoClick(Uri uri);
+        void onPhotoClick(Uri uri, int position);
     }
+
     private final Context context;
     private final List<Uri> photoUris;
     private final OnPhotoClickListener listener;
@@ -35,7 +37,7 @@ public class PhotoGridAdapter extends RecyclerView.Adapter<PhotoGridAdapter.Phot
     public void onBindViewHolder(@NonNull PhotoVH holder, int position) {
         Uri uri = photoUris.get(position);
         Glide.with(context).load(uri).centerCrop().into(holder.photoThumb);
-        holder.itemView.setOnClickListener(v -> listener.onPhotoClick(uri));
+        holder.itemView.setOnClickListener(v -> listener.onPhotoClick(uri, position));
     }
 
     @Override
