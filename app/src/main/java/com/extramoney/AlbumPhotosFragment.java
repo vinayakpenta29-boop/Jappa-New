@@ -1,6 +1,5 @@
 package com.extramoney;
 
-import android.content.Context;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.*;
@@ -42,8 +41,9 @@ public class AlbumPhotosFragment extends Fragment {
         }
 
         grid.setLayoutManager(new GridLayoutManager(getContext(), 3));
-        PhotoGridAdapter adapter = new PhotoGridAdapter(getContext(), photoUris, uri -> {
-            FullscreenPhotoActivity.open(getContext(), uri);
+        PhotoGridAdapter adapter = new PhotoGridAdapter(getContext(), photoUris, (uri, position) -> {
+            // Open fullscreen slider, passing all uris and the clicked index
+            FullscreenImageSliderActivity.open(getContext(), photoUris, position);
         });
         grid.setAdapter(adapter);
 
