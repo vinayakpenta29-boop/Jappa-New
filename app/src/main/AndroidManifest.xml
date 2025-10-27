@@ -7,7 +7,7 @@
         android:theme="@style/Theme.AppCompat.Light.NoActionBar">
 
         <activity
-            android:name=".FullscreenPhotoActivity"
+            android:name=".FullscreenImageSliderActivity"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar"
             android:exported="false"/>
 
