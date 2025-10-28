@@ -10,7 +10,7 @@
         android:layout_height="wrap_content">
 
         <TextView
-            android:text="Dynamic Sales Table"
+            android:text="Extra ₹"
             android:textSize="22sp"
             android:textStyle="bold"
             android:layout_marginBottom="12dp"
@@ -330,6 +330,16 @@
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintBottom_toBottomOf="parent"/>
         </androidx.constraintlayout.motion.widget.MotionLayout>
+
+        <TextView
+           android:layout_width="wrap_content"
+           android:layout_height="wrap_content"
+           android:text="Create by RP"
+           android:textSize="8sp"
+           android:textColor="#BBBBBB"
+           android:gravity="center"
+           android:layout_gravity="center_horizontal"
+           android:layout_marginBottom="18dp"/>
 
     </LinearLayout>
 </ScrollView>
