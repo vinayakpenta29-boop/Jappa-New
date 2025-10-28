@@ -269,12 +269,45 @@ public class ExtraFragment extends Fragment {
     }
 
     private void resetAllData() {
-        SharedPreferences prefs = requireContext().getSharedPreferences("jappa_prefs", Context.MODE_PRIVATE);
-        prefs.edit().remove("table").remove("photos").apply();
-        rowDataList.clear();
-        jappaValues.clear();
-        while (tableLayout.getChildCount() > 4) tableLayout.removeViewAt(1);
-        updateSummaryRows();
-        updateQRCodeAndLastUpdated();
+    Context ctx = requireContext();
+
+    // Clear SharedPreferences
+    SharedPreferences prefs = ctx.getSharedPreferences("jappa_prefs", Context.MODE_PRIVATE);
+    prefs.edit().clear().apply();
+
+    rowDataList.clear();
+    jappaValues.clear();
+    while (tableLayout.getChildCount() > 4) tableLayout.removeViewAt(1);
+    updateSummaryRows();
+    updateQRCodeAndLastUpdated();
+
+    // Delete all photos files/folders for photos tab
+    try {
+        // Replace this path with your exact images directory if different
+        File photosDir = new File(ctx.getFilesDir(), "photos"); // e.g. /data/data/packageName/files/photos
+        deleteRecursive(photosDir);
+    } catch (Exception ignore) {}
+
+    // If you store images externally/shared, do the same for THAT directory
+    /*
+    File extPhotosDir = ctx.getExternalFilesDir("photos");
+    if (extPhotosDir != null) deleteRecursive(extPhotosDir);
+    */
+
+    Toast.makeText(ctx, "All data reset", Toast.LENGTH_SHORT).show();
+}
+
+// Helper to recursively delete a directory and all files within it
+private void deleteRecursive(File fileOrDirectory) {
+    if (fileOrDirectory != null && fileOrDirectory.exists()) {
+        if (fileOrDirectory.isDirectory()) {
+            File[] children = fileOrDirectory.listFiles();
+            if (children != null) {
+                for (File child : children) {
+                    deleteRecursive(child);
+                }
+            }
+        }
+        fileOrDirectory.delete();
     }
 }
