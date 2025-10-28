@@ -17,7 +17,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
 
-        <!-- Row 1 -->
+                <!-- Row 1 -->
         <LinearLayout
             android:orientation="horizontal"
             android:layout_width="match_parent"
@@ -298,9 +298,8 @@
             android:layout_gravity="center"
             android:textSize="12sp" />
 
-        <!-- SWIPE RESET BUTTON (bottom, centered) -->
-        <LinearLayout
-            <androidx.constraintlayout.motion.widget.MotionLayout
+        <!-- SWIPE RESET BUTTON (MotionLayout, centered, NO LinearLayout wrapper) -->
+        <androidx.constraintlayout.motion.widget.MotionLayout
                android:id="@+id/swipeMotionLayout"
                android:layout_width="220dp"
                android:layout_height="52dp"
@@ -310,27 +309,27 @@
                android:layout_marginTop="36dp"
                android:layout_marginBottom="20dp">
 
-               <TextView
-                   android:id="@+id/swipeText"
-                   android:layout_width="match_parent"
-                   android:layout_height="match_parent"
-                   android:text="RESET"
-                   android:textColor="@android:color/white"
-                   android:gravity="center"
-                   android:textStyle="bold"
-                   android:textSize="16sp" />
+            <TextView
+                android:id="@+id/swipeText"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:text="RESET"
+                android:textColor="@android:color/white"
+                android:gravity="center"
+                android:textStyle="bold"
+                android:textSize="16sp" />
 
-               <ImageView
-                   android:id="@+id/swipeThumb"
-                   android:layout_width="46dp"
-                   android:layout_height="46dp"
-                   android:src="@drawable/ic_swipe_thumb"
-                   android:background="@drawable/swipe_thumb_bg"
-                   android:elevation="4dp"
-                   app:layout_constraintLeft_toLeftOf="parent"
-                   app:layout_constraintTop_toTopOf="parent"
-                   app:layout_constraintBottom_toBottomOf="parent"/>
-            </androidx.constraintlayout.motion.widget.MotionLayout>
-        </LinearLayout>
+            <ImageView
+                android:id="@+id/swipeThumb"
+                android:layout_width="46dp"
+                android:layout_height="46dp"
+                android:src="@drawable/ic_swipe_thumb"
+                android:background="@drawable/swipe_thumb_bg"
+                android:elevation="4dp"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"/>
+        </androidx.constraintlayout.motion.widget.MotionLayout>
+
     </LinearLayout>
 </ScrollView>
