@@ -18,6 +18,7 @@ import com.google.zxing.BarcodeFormat;
 import com.journeyapps.barcodescanner.BarcodeEncoder;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import java.io.File;
 import java.util.*;
 
 public class ExtraFragment extends Fragment {
