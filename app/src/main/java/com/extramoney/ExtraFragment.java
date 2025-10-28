@@ -1,6 +1,7 @@
 package com.extramoney;
 
 import android.app.DatePickerDialog;
+import android.app.AlertDialog;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
@@ -12,6 +13,7 @@ import android.widget.*;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import com.ebanx.swipebtn.SwipeButton;
 import com.google.zxing.BarcodeFormat;
 import com.journeyapps.barcodescanner.BarcodeEncoder;
 import org.json.JSONArray;
@@ -23,7 +25,7 @@ public class ExtraFragment extends Fragment {
     private Calendar selectedDate = Calendar.getInstance();
     private double totalJappa = 0;
     private List<Double> jappaValues = new ArrayList<>();
-    private List<String[]> rowDataList = new ArrayList<>(); // Use string array for table
+    private List<String[]> rowDataList = new ArrayList<>();
     private String lastDate = "";
 
     private EditText salesmanNo, barcode, millRate, billNo, jappa;
@@ -101,7 +103,6 @@ public class ExtraFragment extends Fragment {
                     String.valueOf(rowDataList.size() + 1), sNo, bc, mr, bill, dateStr, String.format(Locale.getDefault(), "%.2f", jappaVal)
             });
 
-            // Add row visually before summary/footer
             TableRow tr = new TableRow(getContext());
             for (String cell : rowDataList.get(rowDataList.size() - 1))
                 tr.addView(makeCell(getContext(), cell));
@@ -125,7 +126,16 @@ public class ExtraFragment extends Fragment {
             saveTableData();
         });
 
-        loadTableData(); // Load and visually re-create all rows and summary
+        // SWIPE RESET BUTTON
+        SwipeButton resetSwipeBtn = view.findViewById(R.id.resetSwipeBtn);
+        resetSwipeBtn.setOnStateChangeListener(active -> {
+            if (active) {
+                showResetPopup();
+                resetSwipeBtn.toggleState();
+            }
+        });
+
+        loadTableData();
         updateSummaryRows();
         updateQRCodeAndLastUpdated();
     }
@@ -181,7 +191,6 @@ public class ExtraFragment extends Fragment {
         lastUpdated.setText(rowDataList.isEmpty() ? "" : ("Last updated: " + lastDate));
     }
 
-    // Returns a boxed (bordered) TextView for a table cell
     private TextView makeCell(Context ctx, String text) {
         TextView tv = new TextView(ctx);
         tv.setText(text);
@@ -190,7 +199,6 @@ public class ExtraFragment extends Fragment {
         return tv;
     }
 
-    // --- Persistence ---
     private void saveTableData() {
         JSONArray json = new JSONArray();
         for (String[] row : rowDataList) {
@@ -224,5 +232,42 @@ public class ExtraFragment extends Fragment {
                 lastDate = rowDataList.get(rowDataList.size()-1)[5];
             }
         } catch (Exception ignore) {}
+    }
+
+    // POPUP & RESET
+    private void showResetPopup() {
+        View popupView = LayoutInflater.from(getContext()).inflate(R.layout.dialog_reset_confirm, null);
+        EditText passwordInput = popupView.findViewById(R.id.password_input);
+
+        AlertDialog dialog = new AlertDialog.Builder(getContext())
+                .setView(popupView)
+                .setCancelable(false)
+                .create();
+
+        popupView.findViewById(R.id.reset_btn).setOnClickListener(v -> {
+            String input = passwordInput.getText().toString().trim();
+            if (input.equals("1234")) {
+                resetAllData();
+                dialog.dismiss();
+                Toast.makeText(getContext(), "Data reset successful", Toast.LENGTH_SHORT).show();
+            } else {
+                passwordInput.setError("Wrong password");
+            }
+        });
+        popupView.findViewById(R.id.cancel_btn).setOnClickListener(v -> dialog.dismiss());
+
+        dialog.show();
+    }
+
+    // Completely clears table + photo data
+    private void resetAllData() {
+        SharedPreferences prefs = requireContext().getSharedPreferences("jappa_prefs", Context.MODE_PRIVATE);
+        prefs.edit().remove("table").remove("photos").apply();
+        rowDataList.clear();
+        jappaValues.clear();
+        while (tableLayout.getChildCount() > 4) tableLayout.removeViewAt(1);
+        updateSummaryRows();
+        updateQRCodeAndLastUpdated();
+        // Optionally: Toast, Activity reload, or PhotosFragment notification
     }
 }
