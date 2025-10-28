@@ -300,22 +300,37 @@
 
         <!-- SWIPE RESET BUTTON (bottom, centered) -->
         <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center_horizontal"
-            android:layout_marginTop="28dp"
-            android:orientation="horizontal">
+            <androidx.constraintlayout.motion.widget.MotionLayout
+               android:id="@+id/swipeMotionLayout"
+               android:layout_width="220dp"
+               android:layout_height="52dp"
+               android:layout_gravity="center_horizontal"
+               app:layoutDescription="@xml/swipe_scene"
+               android:background="@drawable/swipe_bg"
+               android:layout_marginTop="36dp"
+               android:layout_marginBottom="20dp">
 
-            <com.ebanx.swipebtn.SwipeButton
-                android:id="@+id/resetSwipeBtn"
-                android:layout_width="140dp"
-                android:layout_height="38dp"
-                app:inner_text="RESET"
-                android:text="Reset"
-                app:button_background="@color/darker_gray"
-                app:button_radius="18dp"
-                android:textAllCaps="true"
-                android:textSize="12sp"/>
+               <TextView
+                   android:id="@+id/swipeText"
+                   android:layout_width="match_parent"
+                   android:layout_height="match_parent"
+                   android:text="RESET"
+                   android:textColor="@android:color/white"
+                   android:gravity="center"
+                   android:textStyle="bold"
+                   android:textSize="16sp" />
+
+               <ImageView
+                   android:id="@+id/swipeThumb"
+                   android:layout_width="46dp"
+                   android:layout_height="46dp"
+                   android:src="@drawable/ic_swipe_thumb"
+                   android:background="@drawable/swipe_thumb_bg"
+                   android:elevation="4dp"
+                   app:layout_constraintLeft_toLeftOf="parent"
+                   app:layout_constraintTop_toTopOf="parent"
+                   app:layout_constraintBottom_toBottomOf="parent"/>
+            </androidx.constraintlayout.motion.widget.MotionLayout>
         </LinearLayout>
     </LinearLayout>
 </ScrollView>
