@@ -283,8 +283,7 @@ public class ExtraFragment extends Fragment {
 
     // Delete all photos files/folders for photos tab
     try {
-        // Replace this path with your exact images directory if different
-        File photosDir = new File(ctx.getFilesDir(), "photos"); // e.g. /data/data/packageName/files/photos
+        File photosDir = new File(ctx.getFilesDir(), "photos"); // /data/data/packageName/files/photos
         deleteRecursive(photosDir);
     } catch (Exception ignore) {}
 
@@ -311,4 +310,7 @@ private void deleteRecursive(File fileOrDirectory) {
         fileOrDirectory.delete();
     }
 }
-}
+
+// --- THIS WAS MISSING ---
+// This closes your ExtraFragment class:
+} // <--- FINAL closing curly brace for the entire class
