@@ -12,8 +12,8 @@ import android.view.ViewGroup;
 import android.widget.*;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.constraintlayout.motion.widget.MotionLayout;
 import androidx.fragment.app.Fragment;
-import com.ebanx.swipebtn.SwipeButton;
 import com.google.zxing.BarcodeFormat;
 import com.journeyapps.barcodescanner.BarcodeEncoder;
 import org.json.JSONArray;
@@ -126,13 +126,22 @@ public class ExtraFragment extends Fragment {
             saveTableData();
         });
 
-        // SWIPE RESET BUTTON
-        SwipeButton resetSwipeBtn = view.findViewById(R.id.resetSwipeBtn);
-        resetSwipeBtn.setOnStateChangeListener(active -> {
-            if (active) {
-                showResetPopup();
-                resetSwipeBtn.toggleState();
+        // MOTIONLAYOUT SWIPE-TO-RESET BUTTON
+        MotionLayout swipeLayout = view.findViewById(R.id.swipeMotionLayout);
+        swipeLayout.setTransitionListener(new MotionLayout.TransitionListener() {
+            @Override
+            public void onTransitionStarted(MotionLayout motionLayout, int startId, int endId) {}
+            @Override
+            public void onTransitionChange(MotionLayout motionLayout, int startId, int endId, float progress) {}
+            @Override
+            public void onTransitionCompleted(MotionLayout motionLayout, int currentId) {
+                if (currentId == R.id.end) {
+                    showResetPopup();
+                    swipeLayout.transitionToStart();
+                }
             }
+            @Override
+            public void onTransitionTrigger(MotionLayout motionLayout, int triggerId, boolean positive, float progress) {}
         });
 
         loadTableData();
@@ -259,7 +268,6 @@ public class ExtraFragment extends Fragment {
         dialog.show();
     }
 
-    // Completely clears table + photo data
     private void resetAllData() {
         SharedPreferences prefs = requireContext().getSharedPreferences("jappa_prefs", Context.MODE_PRIVATE);
         prefs.edit().remove("table").remove("photos").apply();
@@ -268,6 +276,5 @@ public class ExtraFragment extends Fragment {
         while (tableLayout.getChildCount() > 4) tableLayout.removeViewAt(1);
         updateSummaryRows();
         updateQRCodeAndLastUpdated();
-        // Optionally: Toast, Activity reload, or PhotosFragment notification
     }
 }
