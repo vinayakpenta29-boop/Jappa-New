@@ -15,7 +15,8 @@
             android:textStyle="bold"
             android:layout_marginBottom="12dp"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
+            android:layout_height="wrap_content"
+            android:gravity="center"/>
 
                 <!-- Row 1 -->
         <LinearLayout
