@@ -154,8 +154,9 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
-            android:backgroundTint="#FFA500"
+            android:background="@drawable/curved_add_button"
             android:textColor="#FFFFFF"
+            android:textStyle="bold"
             android:layout_marginTop="8dp"
             android:layout_marginBottom="8dp"/>
 
