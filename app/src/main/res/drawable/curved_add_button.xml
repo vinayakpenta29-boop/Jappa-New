@@ -1,0 +1,5 @@
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="#FFA500"/> <!-- blue, for example; use your preferred color -->
+    <corners android:radius="40dp"/> <!-- large radius for oval/pill appearance -->
+</shape>
