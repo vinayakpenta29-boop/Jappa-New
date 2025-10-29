@@ -10,7 +10,7 @@
         android:text="Upload Image"
         android:textStyle="bold"
         android:textColor="#FFFFFF"
-        android:background="@drawable/curved_add_button"
+        android:background="#FFA500"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal" />
