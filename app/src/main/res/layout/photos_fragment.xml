@@ -8,6 +8,9 @@
     <Button
         android:id="@+id/uploadImageBtn"
         android:text="Upload Image"
+        android:textStyle="bold"
+        android:textColor="#FFFFFF"
+        android:background="@drawable/curved_add_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal" />
