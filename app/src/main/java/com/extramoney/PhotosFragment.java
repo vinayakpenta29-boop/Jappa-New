@@ -162,6 +162,11 @@ public class PhotosFragment extends Fragment {
         } catch (Exception ignore) {}
     }
 
+    // Call this to fully refresh albums from storage and clear UI
+    public void reloadData() {
+        loadPhotosData();
+    }
+
     // Build album list for album grid
     private void updateAlbums() {
         albumList.clear();
