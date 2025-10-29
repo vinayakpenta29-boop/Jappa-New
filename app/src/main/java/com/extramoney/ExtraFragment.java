@@ -294,6 +294,16 @@ public class ExtraFragment extends Fragment {
     if (extPhotosDir != null) deleteRecursive(extPhotosDir);
     */
 
+        // Notify PhotosFragment/tab to reload immediately:
+    if (getActivity() != null) {
+        List<Fragment> fragments = getActivity().getSupportFragmentManager().getFragments();
+        for (Fragment f : fragments) {
+            if (f instanceof PhotosFragment) {
+                ((PhotosFragment) f).reloadData();
+            }
+        }
+    }
+
     Toast.makeText(ctx, "All data reset", Toast.LENGTH_SHORT).show();
 }
 
