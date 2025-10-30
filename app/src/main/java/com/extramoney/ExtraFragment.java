@@ -6,9 +6,8 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.os.Bundle;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
+import android.text.format.DateFormatSymbols;
+import android.view.*;
 import android.widget.*;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -36,6 +35,15 @@ public class ExtraFragment extends Fragment {
     private TableLayout tableLayout;
     private TableRow cutoffRow, balanceRow;
     private ImageView qrCodeImage;
+
+    // For filter menu (store selection)
+    private Set<String> selectedMonthYears = new HashSet<>();
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setHasOptionsMenu(true);
+    }
 
     @Nullable
     @Override
@@ -70,7 +78,6 @@ public class ExtraFragment extends Fragment {
         qrCodeImage = view.findViewById(R.id.qrCodeImage);
         lastUpdated = view.findViewById(R.id.lastUpdated);
 
-        // Date picker dialog
         dateText.setOnClickListener(v -> {
             int year = selectedDate.get(Calendar.YEAR);
             int month = selectedDate.get(Calendar.MONTH);
@@ -118,6 +125,7 @@ public class ExtraFragment extends Fragment {
             updateSummaryRows();
             updateQRCodeAndLastUpdated();
             saveTableData();
+            filterTableData(); // <-- REAPPLY filter after new row
         });
 
         qrSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> updateQRCodeAndLastUpdated());
@@ -148,6 +156,98 @@ public class ExtraFragment extends Fragment {
         loadTableData();
         updateSummaryRows();
         updateQRCodeAndLastUpdated();
+        filterTableData(); // ensure filter applied after initial load
+    }
+
+    // --- 3-dots menu filter setup ---
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        inflater.inflate(R.menu.menu_extra, menu); // Create menu_extra.xml in res/menu (see prev answers)
+    }
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == R.id.menu_filter) {
+            showMonthFilterDialog();
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    private void showMonthFilterDialog() {
+        // Extract unique month-year keys from your rowDataList
+        Set<String> allMonthYears = new LinkedHashSet<>();
+        for (String[] row : rowDataList) {
+            try {
+                String date = row[5];
+                String[] parts = date.split("/");
+                String monthYear = getMonthName(Integer.parseInt(parts[1])) + " " + parts[2];
+                allMonthYears.add(monthYear);
+            } catch (Exception ignore) { }
+        }
+        final String[] items = allMonthYears.toArray(new String[0]);
+        boolean[] checked = new boolean[items.length];
+        for (int i = 0; i < items.length; i++) checked[i] = selectedMonthYears.contains(items[i]);
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+        builder.setTitle("Filter by Month");
+        builder.setMultiChoiceItems(items, checked, (dialog, which, isChecked) -> {
+            checked[which] = isChecked;
+        });
+        builder.setPositiveButton("OK", (dialog, which) -> {
+            selectedMonthYears.clear();
+            for (int i = 0; i < items.length; i++) {
+                if (checked[i]) selectedMonthYears.add(items[i]);
+            }
+            filterTableData();
+        });
+        builder.setNeutralButton("Clear", (dialog, which) -> {
+            selectedMonthYears.clear();
+            filterTableData();
+        });
+        builder.show();
+    }
+    private String getMonthName(int monthNumber) {
+        return new DateFormatSymbols().getMonths()[monthNumber - 1];
+    }
+    // ----------------------------------
+
+    private void filterTableData() {
+        // Remove all rows except header and summary/footer
+        while (tableLayout.getChildCount() > 4) tableLayout.removeViewAt(1);
+
+        double filteredTotal = 0;
+        for (String[] row : rowDataList) {
+            try {
+                String date = row[5];
+                String[] parts = date.split("/");
+                String monthYear = getMonthName(Integer.parseInt(parts[1])) + " " + parts[2];
+                boolean included = selectedMonthYears.isEmpty() || selectedMonthYears.contains(monthYear);
+                if (included) {
+                    TableRow tr = new TableRow(getContext());
+                    for (String cell : row) tr.addView(makeCell(getContext(), cell));
+                    int insertIdx = Math.max(tableLayout.getChildCount() - 3, 1);
+                    tableLayout.addView(tr, insertIdx);
+                    filteredTotal += Double.parseDouble(row[row.length - 1]);
+                }
+            } catch (Exception ignore) {}
+        }
+
+        // Show filtered total Jappa
+        totalJappaText.setText(String.format(Locale.getDefault(), "%.2f", filteredTotal));
+        if (selectedMonthYears.isEmpty()) {
+            updateSummaryRows();
+        } else {
+            if (cutoffSwitch.isChecked()) {
+                double cutoffAmt = filteredTotal * 0.28;
+                cutoffJappaText.setText(String.format(Locale.getDefault(), "%.2f", cutoffAmt));
+                balanceText.setText(String.format(Locale.getDefault(), "%.2f", filteredTotal - cutoffAmt));
+                cutoffRow.setVisibility(View.VISIBLE);
+                balanceRow.setVisibility(View.VISIBLE);
+            } else {
+                cutoffRow.setVisibility(View.GONE);
+                balanceRow.setVisibility(View.GONE);
+            }
+        }
     }
 
     private void updateSummaryRows() {
@@ -270,58 +370,47 @@ public class ExtraFragment extends Fragment {
     }
 
     private void resetAllData() {
-    Context ctx = requireContext();
+        Context ctx = requireContext();
 
-    // Clear SharedPreferences
-    SharedPreferences prefs = ctx.getSharedPreferences("jappa_prefs", Context.MODE_PRIVATE);
-    prefs.edit().clear().apply();
+        // Clear SharedPreferences
+        SharedPreferences prefs = ctx.getSharedPreferences("jappa_prefs", Context.MODE_PRIVATE);
+        prefs.edit().clear().apply();
 
-    rowDataList.clear();
-    jappaValues.clear();
-    while (tableLayout.getChildCount() > 4) tableLayout.removeViewAt(1);
-    updateSummaryRows();
-    updateQRCodeAndLastUpdated();
+        rowDataList.clear();
+        jappaValues.clear();
+        while (tableLayout.getChildCount() > 4) tableLayout.removeViewAt(1);
+        updateSummaryRows();
+        updateQRCodeAndLastUpdated();
 
-    // Delete all photos files/folders for photos tab
-    try {
-        File photosDir = new File(ctx.getFilesDir(), "photos"); // /data/data/packageName/files/photos
-        deleteRecursive(photosDir);
-    } catch (Exception ignore) {}
+        try {
+            File photosDir = new File(ctx.getFilesDir(), "photos");
+            deleteRecursive(photosDir);
+        } catch (Exception ignore) {}
 
-    // If you store images externally/shared, do the same for THAT directory
-    /*
-    File extPhotosDir = ctx.getExternalFilesDir("photos");
-    if (extPhotosDir != null) deleteRecursive(extPhotosDir);
-    */
-
-        // Notify PhotosFragment/tab to reload immediately:
-    if (getActivity() != null) {
-        List<Fragment> fragments = getActivity().getSupportFragmentManager().getFragments();
-        for (Fragment f : fragments) {
-            if (f instanceof PhotosFragment) {
-                ((PhotosFragment) f).reloadData();
-            }
-        }
-    }
-
-    Toast.makeText(ctx, "All data reset", Toast.LENGTH_SHORT).show();
-}
-
-// Helper to recursively delete a directory and all files within it
-private void deleteRecursive(File fileOrDirectory) {
-    if (fileOrDirectory != null && fileOrDirectory.exists()) {
-        if (fileOrDirectory.isDirectory()) {
-            File[] children = fileOrDirectory.listFiles();
-            if (children != null) {
-                for (File child : children) {
-                    deleteRecursive(child);
+        if (getActivity() != null) {
+            List<Fragment> fragments = getActivity().getSupportFragmentManager().getFragments();
+            for (Fragment f : fragments) {
+                if (f instanceof PhotosFragment) {
+                    ((PhotosFragment) f).reloadData();
                 }
             }
         }
-        fileOrDirectory.delete();
+
+        Toast.makeText(ctx, "All data reset", Toast.LENGTH_SHORT).show();
+    }
+
+    // Helper to recursively delete a directory and all files within it
+    private void deleteRecursive(File fileOrDirectory) {
+        if (fileOrDirectory != null && fileOrDirectory.exists()) {
+            if (fileOrDirectory.isDirectory()) {
+                File[] children = fileOrDirectory.listFiles();
+                if (children != null) {
+                    for (File child : children) {
+                        deleteRecursive(child);
+                    }
+                }
+            }
+            fileOrDirectory.delete();
+        }
     }
 }
-
-// --- THIS WAS MISSING ---
-// This closes your ExtraFragment class:
-} // <--- FINAL closing curly brace for the entire class
