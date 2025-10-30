@@ -6,7 +6,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.os.Bundle;
-import android.text.format.DateFormatSymbols;
+import java.text.DateFormatSymbols;
 import android.view.*;
 import android.widget.*;
 import androidx.annotation.NonNull;
