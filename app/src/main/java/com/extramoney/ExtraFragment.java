@@ -42,6 +42,8 @@ public class ExtraFragment extends Fragment {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Toolbar toolbar = view.findViewById(R.id.toolbar);
+    ((AppCompatActivity) requireActivity()).setSupportActionBar(toolbar);
         setHasOptionsMenu(true);
     }
 
