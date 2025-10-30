@@ -44,9 +44,7 @@ public class ExtraFragment extends Fragment {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Toolbar toolbar = view.findViewById(R.id.toolbar);
-    ((AppCompatActivity) requireActivity()).setSupportActionBar(toolbar);
-        setHasOptionsMenu(true);
+        setHasOptionsMenu(true); // Only this line stays here
     }
 
     @Nullable
@@ -63,7 +61,11 @@ public class ExtraFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // Bind views
+        // Setup Toolbar for menu support (must be here, not in onCreate!)
+        Toolbar toolbar = view.findViewById(R.id.toolbar);
+        ((AppCompatActivity) requireActivity()).setSupportActionBar(toolbar);
+
+        // Bind views (unchanged)
         salesmanNo = view.findViewById(R.id.salesmanNo);
         barcode = view.findViewById(R.id.barcode);
         millRate = view.findViewById(R.id.millRate);
@@ -129,7 +131,7 @@ public class ExtraFragment extends Fragment {
             updateSummaryRows();
             updateQRCodeAndLastUpdated();
             saveTableData();
-            filterTableData(); // <-- REAPPLY filter after new row
+            filterTableData();
         });
 
         qrSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> updateQRCodeAndLastUpdated());
@@ -160,13 +162,13 @@ public class ExtraFragment extends Fragment {
         loadTableData();
         updateSummaryRows();
         updateQRCodeAndLastUpdated();
-        filterTableData(); // ensure filter applied after initial load
+        filterTableData();
     }
 
     // --- 3-dots menu filter setup ---
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-        inflater.inflate(R.menu.menu_extra, menu); // Create menu_extra.xml in res/menu (see prev answers)
+        inflater.inflate(R.menu.menu_extra, menu);
     }
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -178,7 +180,6 @@ public class ExtraFragment extends Fragment {
     }
 
     private void showMonthFilterDialog() {
-        // Extract unique month-year keys from your rowDataList
         Set<String> allMonthYears = new LinkedHashSet<>();
         for (String[] row : rowDataList) {
             try {
@@ -216,7 +217,6 @@ public class ExtraFragment extends Fragment {
     // ----------------------------------
 
     private void filterTableData() {
-        // Remove all rows except header and summary/footer
         while (tableLayout.getChildCount() > 4) tableLayout.removeViewAt(1);
 
         double filteredTotal = 0;
@@ -236,7 +236,6 @@ public class ExtraFragment extends Fragment {
             } catch (Exception ignore) {}
         }
 
-        // Show filtered total Jappa
         totalJappaText.setText(String.format(Locale.getDefault(), "%.2f", filteredTotal));
         if (selectedMonthYears.isEmpty()) {
             updateSummaryRows();
@@ -376,7 +375,6 @@ public class ExtraFragment extends Fragment {
     private void resetAllData() {
         Context ctx = requireContext();
 
-        // Clear SharedPreferences
         SharedPreferences prefs = ctx.getSharedPreferences("jappa_prefs", Context.MODE_PRIVATE);
         prefs.edit().clear().apply();
 
@@ -403,7 +401,6 @@ public class ExtraFragment extends Fragment {
         Toast.makeText(ctx, "All data reset", Toast.LENGTH_SHORT).show();
     }
 
-    // Helper to recursively delete a directory and all files within it
     private void deleteRecursive(File fileOrDirectory) {
         if (fileOrDirectory != null && fileOrDirectory.exists()) {
             if (fileOrDirectory.isDirectory()) {
