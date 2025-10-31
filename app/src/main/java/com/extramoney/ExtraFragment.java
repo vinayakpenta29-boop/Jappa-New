@@ -38,13 +38,12 @@ public class ExtraFragment extends Fragment {
     private TableRow cutoffRow, balanceRow;
     private ImageView qrCodeImage;
 
-    // For filter menu (store selection)
     private Set<String> selectedMonthYears = new HashSet<>();
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setHasOptionsMenu(true); // Only this line stays here
+        setHasOptionsMenu(true);
     }
 
     @Nullable
@@ -61,11 +60,9 @@ public class ExtraFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // Setup Toolbar for menu support (must be here, not in onCreate!)
         Toolbar toolbar = view.findViewById(R.id.toolbar);
         ((AppCompatActivity) requireActivity()).setSupportActionBar(toolbar);
 
-        // Bind views (unchanged)
         salesmanNo = view.findViewById(R.id.salesmanNo);
         barcode = view.findViewById(R.id.barcode);
         millRate = view.findViewById(R.id.millRate);
@@ -141,22 +138,17 @@ public class ExtraFragment extends Fragment {
             saveTableData();
         });
 
-        // MOTIONLAYOUT SWIPE-TO-RESET BUTTON
         MotionLayout swipeLayout = view.findViewById(R.id.swipeMotionLayout);
         swipeLayout.setTransitionListener(new MotionLayout.TransitionListener() {
-            @Override
-            public void onTransitionStarted(MotionLayout motionLayout, int startId, int endId) {}
-            @Override
-            public void onTransitionChange(MotionLayout motionLayout, int startId, int endId, float progress) {}
-            @Override
-            public void onTransitionCompleted(MotionLayout motionLayout, int currentId) {
-                if (currentId == R.id.end) {
+            @Override public void onTransitionStarted(MotionLayout m, int s, int e) {}
+            @Override public void onTransitionChange(MotionLayout m, int s, int e, float p) {}
+            @Override public void onTransitionCompleted(MotionLayout m, int c) {
+                if (c == R.id.end) {
                     showResetPopup();
                     swipeLayout.transitionToStart();
                 }
             }
-            @Override
-            public void onTransitionTrigger(MotionLayout motionLayout, int triggerId, boolean positive, float progress) {}
+            @Override public void onTransitionTrigger(MotionLayout m, int t, boolean pos, float p) {}
         });
 
         loadTableData();
@@ -165,7 +157,6 @@ public class ExtraFragment extends Fragment {
         filterTableData();
     }
 
-    // --- 3-dots menu filter setup ---
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         inflater.inflate(R.menu.menu_extra, menu);
@@ -174,6 +165,9 @@ public class ExtraFragment extends Fragment {
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == R.id.menu_filter) {
             showMonthFilterDialog();
+            return true;
+        } else if (item.getItemId() == R.id.menu_delete_entry) {
+            showDeleteEntryDialog();
             return true;
         }
         return super.onOptionsItemSelected(item);
@@ -214,7 +208,50 @@ public class ExtraFragment extends Fragment {
     private String getMonthName(int monthNumber) {
         return new DateFormatSymbols().getMonths()[monthNumber - 1];
     }
-    // ----------------------------------
+
+    private void showDeleteEntryDialog() {
+        if (rowDataList.isEmpty()) {
+            Toast.makeText(getContext(), "No entries to delete", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        // Build serial numbers (1, 2, 3, ...)
+        String[] rowNumbers = new String[rowDataList.size()];
+        for (int i = 0; i < rowNumbers.length; i++) {
+            rowNumbers[i] = String.valueOf(i + 1);
+        }
+        boolean[] checked = new boolean[rowNumbers.length];
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+        builder.setTitle("Delete Entries");
+        builder.setMultiChoiceItems(rowNumbers, checked, (dialog, which, isChecked) -> checked[which] = isChecked);
+        builder.setPositiveButton("Delete", (dialog, which) -> {
+            List<Integer> toDelete = new ArrayList<>();
+            for (int i = 0; i < checked.length; i++) {
+                if (checked[i]) toDelete.add(i);
+            }
+            if (toDelete.isEmpty()) return;
+            Collections.sort(toDelete, Collections.reverseOrder());
+            for (int idx : toDelete) rowDataList.remove(idx);
+            reindexRows();
+            jappaValues.clear();
+            for (String[] row : rowDataList) {
+                try {
+                    jappaValues.add(Double.parseDouble(row[row.length - 1]));
+                } catch (Exception ignore) {}
+            }
+            saveTableData();
+            filterTableData();
+            Toast.makeText(getContext(), "Deleted selected entries", Toast.LENGTH_SHORT).show();
+        });
+        builder.setNegativeButton("Cancel", null);
+        builder.show();
+    }
+
+    private void reindexRows() {
+        for (int i = 0; i < rowDataList.size(); i++) {
+            rowDataList.get(i)[0] = String.valueOf(i + 1);
+        }
+    }
 
     private void filterTableData() {
         while (tableLayout.getChildCount() > 4) tableLayout.removeViewAt(1);
@@ -347,7 +384,6 @@ public class ExtraFragment extends Fragment {
         } catch (Exception ignore) {}
     }
 
-    // POPUP & RESET
     private void showResetPopup() {
         View popupView = LayoutInflater.from(getContext()).inflate(R.layout.dialog_reset_confirm, null);
         EditText passwordInput = popupView.findViewById(R.id.password_input);
