@@ -345,6 +345,8 @@ public class ExtraFragment extends Fragment {
         TextView tv = new TextView(ctx);
         tv.setText(text);
         tv.setPadding(8, 8, 8, 8);
+        tv.setTextColor(0xFF000000);
+        tv.setGravity(Gravity.CENTER);
         tv.setBackgroundResource(R.drawable.border_cell);
         return tv;
     }
