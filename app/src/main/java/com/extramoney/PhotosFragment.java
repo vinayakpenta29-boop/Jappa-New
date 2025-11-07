@@ -11,6 +11,7 @@ import android.text.InputType;
 import android.view.*;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Toast;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
@@ -39,11 +40,9 @@ public class PhotosFragment extends Fragment {
         uploadImageBtn = v.findViewById(R.id.uploadImageBtn);
         albumsRecycler = v.findViewById(R.id.photosRecycler);
 
-        // Albums display: use grid, 2 per row
         albumsRecycler.setLayoutManager(new GridLayoutManager(getContext(), 2));
 
         albumAdapter = new AlbumAdapter(requireContext(), albumList, album -> {
-            // Open AlbumPhotosFragment with album (via activity or nested fragment)
             AlbumPhotosFragment fragment = AlbumPhotosFragment.newInstance(
                     album.name,
                     toUris(album.photoItems)
@@ -51,7 +50,7 @@ public class PhotosFragment extends Fragment {
             requireActivity()
                 .getSupportFragmentManager()
                 .beginTransaction()
-                .replace(R.id.photos_sub_fragment_container, fragment) // <-- container id for fragment content
+                .replace(R.id.photos_sub_fragment_container, fragment)
                 .addToBackStack(null)
                 .commit();
         });
@@ -63,12 +62,15 @@ public class PhotosFragment extends Fragment {
                 if (result.getResultCode() == getActivity().RESULT_OK && result.getData() != null) {
                     Uri imageUri = result.getData().getData();
 
-                    // Persist permission for future app launches (android 10+ compatibility)
+                    // ✅ CRITICAL: Take persistable permission
                     try {
                         requireContext().getContentResolver().takePersistableUriPermission(
-                                imageUri, Intent.FLAG_GRANT_READ_URI_PERMISSION
+                                imageUri,
+                                Intent.FLAG_GRANT_READ_URI_PERMISSION
                         );
-                    } catch (Exception ignore) {}
+                    } catch (Exception e) {
+                        Toast.makeText(getContext(), "Could not save image permission", Toast.LENGTH_SHORT).show();
+                    }
 
                     selectMonthAndYear(imageUri);
                 }
@@ -77,6 +79,7 @@ public class PhotosFragment extends Fragment {
         uploadImageBtn.setOnClickListener(vw -> {
             Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
             intent.setType("image/*");
+            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION); // ✅ MUST HAVE THIS FLAG
             pickImageLauncher.launch(intent);
         });
 
@@ -84,7 +87,6 @@ public class PhotosFragment extends Fragment {
         return v;
     }
 
-    // Helper: convert to ArrayList<Uri>
     private ArrayList<Uri> toUris(List<PhotoItem> items) {
         ArrayList<Uri> uris = new ArrayList<>();
         for (PhotoItem p : items) uris.add(p.uri);
@@ -153,21 +155,35 @@ public class PhotosFragment extends Fragment {
                 String month = obj.getString("month");
                 String year = obj.getString("year");
                 Uri uri = Uri.parse(obj.getString("uri"));
-                String key = month + ", " + year;
-                PhotoItem item = new PhotoItem(uri, month, year);
-                if (!monthGroupMap.containsKey(key)) monthGroupMap.put(key, new ArrayList<>());
-                monthGroupMap.get(key).add(item);
+
+                // ✅ Validate URI is still accessible
+                if (isUriAccessible(uri)) {
+                    String key = month + ", " + year;
+                    PhotoItem item = new PhotoItem(uri, month, year);
+                    if (!monthGroupMap.containsKey(key)) monthGroupMap.put(key, new ArrayList<>());
+                    monthGroupMap.get(key).add(item);
+                } else {
+                    // URI no longer accessible - skip silently
+                }
             }
             updateAlbums();
         } catch (Exception ignore) {}
     }
 
-    // Call this to fully refresh albums from storage and clear UI
+    // ✅ Check if URI is still accessible
+    private boolean isUriAccessible(Uri uri) {
+        try {
+            requireContext().getContentResolver().openInputStream(uri).close();
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
     public void reloadData() {
         loadPhotosData();
     }
 
-    // Build album list for album grid
     private void updateAlbums() {
         albumList.clear();
         for (Map.Entry<String, List<PhotoItem>> entry : monthGroupMap.entrySet()) {
