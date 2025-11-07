@@ -40,7 +40,7 @@ public class PhotosFragment extends Fragment {
         uploadImageBtn = v.findViewById(R.id.uploadImageBtn);
         albumsRecycler = v.findViewById(R.id.photosRecycler);
 
-        albumsRecycler.setLayoutManager(new GridLayoutManager(getContext(), 2));
+        albumsRecycler.setLayoutManager(new GridLayoutManager(getContext(), 3));
 
         albumAdapter = new AlbumAdapter(requireContext(), albumList, album -> {
             AlbumPhotosFragment fragment = AlbumPhotosFragment.newInstance(
