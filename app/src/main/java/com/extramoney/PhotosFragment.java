@@ -6,7 +6,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
-import android.provider.MediaStore;
 import android.text.InputType;
 import android.view.*;
 import android.widget.Button;
@@ -62,7 +61,7 @@ public class PhotosFragment extends Fragment {
                 if (result.getResultCode() == getActivity().RESULT_OK && result.getData() != null) {
                     Uri imageUri = result.getData().getData();
 
-                    // ✅ CRITICAL: Take persistable permission
+                    // ✅ Take persistable permission
                     try {
                         requireContext().getContentResolver().takePersistableUriPermission(
                                 imageUri,
@@ -77,9 +76,11 @@ public class PhotosFragment extends Fragment {
             });
 
         uploadImageBtn.setOnClickListener(vw -> {
-            Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+            Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT); // ✅ Changed from ACTION_PICK
+            intent.addCategory(Intent.CATEGORY_OPENABLE);
             intent.setType("image/*");
-            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION); // ✅ MUST HAVE THIS FLAG
+            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION 
+                          | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION); // ✅ Both flags
             pickImageLauncher.launch(intent);
         });
 
@@ -162,15 +163,12 @@ public class PhotosFragment extends Fragment {
                     PhotoItem item = new PhotoItem(uri, month, year);
                     if (!monthGroupMap.containsKey(key)) monthGroupMap.put(key, new ArrayList<>());
                     monthGroupMap.get(key).add(item);
-                } else {
-                    // URI no longer accessible - skip silently
                 }
             }
             updateAlbums();
         } catch (Exception ignore) {}
     }
 
-    // ✅ Check if URI is still accessible
     private boolean isUriAccessible(Uri uri) {
         try {
             requireContext().getContentResolver().openInputStream(uri).close();
