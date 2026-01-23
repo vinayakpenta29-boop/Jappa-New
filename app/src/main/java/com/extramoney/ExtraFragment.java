@@ -296,7 +296,7 @@ public class ExtraFragment extends Fragment {
         totalJappaText.setText(String.format(Locale.getDefault(), "%.2f", totalJappa));
 
         if (cutoffSwitch.isChecked()) {
-            double cutoffAmt = totalJappa * 0.28;
+            double cutoffAmt = totalJappa * 0.10;
             cutoffJappaText.setText(String.format(Locale.getDefault(), "%.2f", cutoffAmt));
             balanceText.setText(String.format(Locale.getDefault(), "%.2f", totalJappa - cutoffAmt));
             cutoffRow.setVisibility(View.VISIBLE);
@@ -324,8 +324,8 @@ public class ExtraFragment extends Fragment {
         }
         sb.append("Total Jappa: ").append(String.format(Locale.getDefault(), "%.2f", totalJappa)).append("");
         if (cutoffSwitch.isChecked()) {
-            double cutoffAmt = totalJappa * 0.28;
-            sb.append("Cut Off Jappa (28%): ").append(String.format(Locale.getDefault(), "%.2f", cutoffAmt)).append("");
+            double cutoffAmt = totalJappa * 0.10;
+            sb.append("Cut Off Jappa (10%): ").append(String.format(Locale.getDefault(), "%.2f", cutoffAmt)).append("");
             sb.append("Balance Amount: ").append(String.format(Locale.getDefault(), "%.2f", totalJappa - cutoffAmt)).append("");
         }
 
