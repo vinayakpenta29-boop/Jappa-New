@@ -278,7 +278,7 @@ public class ExtraFragment extends Fragment {
             updateSummaryRows();
         } else {
             if (cutoffSwitch.isChecked()) {
-                double cutoffAmt = filteredTotal * 0.28;
+                double cutoffAmt = filteredTotal * 0.10;
                 cutoffJappaText.setText(String.format(Locale.getDefault(), "%.2f", cutoffAmt));
                 balanceText.setText(String.format(Locale.getDefault(), "%.2f", filteredTotal - cutoffAmt));
                 cutoffRow.setVisibility(View.VISIBLE);
